@@ -1,125 +1,111 @@
 📊 VizDash Pro — Scientific Visualization & Statistical Studio
 
-VizDash Pro is a high-performance, professional-grade, browser-based visualization studio and statistical workbench. It is designed for data scientists, researchers, and analysts who require the precision of Matplotlib, the statistical aesthetics of Seaborn, and the interactive power of Plotly, all within a single, zero-install HTML interface.
+VizDash Pro is a high-performance, browser-based visualization studio and statistical workbench designed for data scientists, researchers, and analysts. It combines the precision of Matplotlib, the statistical elegance of Seaborn, and the interactivity of Plotly—all within a single, zero-install HTML application.
 
-Unlike standard charting tools, VizDash Pro treats visualizations as a "Scientific Studio," supporting layered datasets, LaTeX mathematical notation, and integrated statistical inference.
+Unlike conventional charting tools, VizDash Pro operates as a scientific studio, enabling layered visualizations, LaTeX-rendered mathematics, and integrated statistical analysis in one unified environment.
 
 🚀 Key Value Proposition
-Library Influence	What VizDash Pro Inherits	Application in Studio
-Matplotlib	Pixel-perfect control & precision	Exact axis scaling (Log/Linear), line-style control, and publication-ready exports.
-Seaborn	Statistical elegance & defaults	High-level distribution plots (KDE, Violin) and polished professional color palettes.
-Plotly	Modern web interactivity	Dynamic zooming, hovering, 3D rotations, and a drag-and-drop dashboard builder.
+Library Influence	Capability	Implementation in VizDash Pro
+Matplotlib	Precision & control	Exact axis scaling (linear/log), fine-grained styling, publication-ready outputs
+Seaborn	Statistical visualization	KDE, violin plots, distribution-aware defaults, refined color palettes
+Plotly	Interactive graphics	Zooming, hovering, 3D interaction, and dynamic dashboard composition
 ✨ Core Features
 1. Intelligent Data Ingestion
-
-Multi-Format Support: Seamlessly upload .csv, .json, and .tsv files.
-
-Automatic Type Detection: Automatically identifies Numeric, Categorical, and Datetime columns.
-
-Data Inspector: An integrated data table and summary statistics panel to verify data integrity before plotting.
-
-Sample Datasets: One-click access to scientific sample data for rapid prototyping.
-
+Multi-format support: Upload .csv, .json, and .tsv files seamlessly
+Automatic type detection: Identifies numeric, categorical, and datetime fields
+Data inspector: Built-in table view with summary statistics for validation
+Sample datasets: One-click access to preloaded scientific datasets
 2. Advanced Visualization Studio
+🔹 Layer-Based Architecture
+Add multiple layers per plot
+Overlay datasets (e.g., scatter + regression line) on shared axes
+🔹 Comprehensive Plot Library
 
-The "Layer" System: Instead of one plot per file, add multiple "Layers." Overlay experimental data (Scatter) with theoretical models (Line) on a single set of axes.
+Basic Plots
 
-Exhaustive Plot Library:
+Line, Scatter, Bar, Histogram, Step, Stem, Area, Error Bars
 
-Basic: Line, Scatter, Bar, Histogram, Step, Stem, Area, Error Bars.
+Statistical Plots
 
-Statistical: KDE, ECDF, Box, Violin, Swarm, Count.
+KDE, ECDF, Box, Violin, Swarm, Count
 
-Multivariate: Heatmaps, Correlation Matrices, Parallel Coordinates, Radar plots.
+Multivariate Visualizations
 
-Scientific/3D: 3D Scatter, 3D Surface, 3D Wireframe, Contour plots.
+Heatmaps, Correlation Matrices, Parallel Coordinates, Radar Charts
 
-Specialized: Time Series, Pie/Donut, Treemaps, Sunbursts, Sankey, Candlesticks.
+Scientific & 3D
 
-LaTeX Integration: Full support for 
-LaTeX
-L
-A
-T
-E
-	​
+3D Scatter, Surface, Wireframe, Contour
 
-X
- in titles and axis labels (e.g., enter $\alpha \beta \gamma$ to render scientific symbols).
+Specialized Charts
 
-Publication-Grade Styling: Choose between Dark, Light, and Publication (High-Contrast White) themes.
-
+Time Series, Pie/Donut, Treemap, Sunburst, Sankey, Candlestick
+🔹 LaTeX Integration
+Full LaTeX support in titles, axis labels, and annotations
+Example: $\\alpha \\beta \\gamma$ renders scientific symbols correctly
+🔹 Styling & Themes
+Dark Mode
+Light Mode
+Publication Mode (high-contrast, journal-ready)
 3. Statistical Workbench
 
-Integrated analytical tools that go beyond mere visualization:
+Go beyond visualization with built-in analytical tools:
 
-Linear & Polynomial Regression: Calculate slope, intercept, and 
-𝑅
+Regression Models
+Linear and polynomial regression
+Outputs include slope, intercept, and R
 2
-R
-2
- values with visual fit overlays.
-
-Hypothesis Testing: Independent T-Tests and One-Way ANOVA to determine statistical significance.
-
-Bayesian Inference: Define priors and estimate posterior distributions with simplified MCMC logic.
-
-Confidence Contours: Generate 2D likelihood/confidence surfaces for parameter estimation.
-
+Hypothesis Testing
+Independent t-tests
+One-way ANOVA
+Bayesian Inference
+Custom priors
+Posterior estimation via simplified MCMC
+Confidence Analysis
+2D likelihood and confidence contour generation
 4. Studio Dashboard & Export
-
-Curated Workspace: Send any rendered plot or statistical result to the Dashboard.
-
-Flexible Layout: Drag-and-drop panels to arrange your findings.
-
-Professional Export:
-
-High-Res Images: Export plots as PNG or SVG for journals.
-
-Interactive Reports: Export the entire dashboard as a standalone interactive HTML file to share with colleagues.
-
+Curated workspace
+Save plots and analysis outputs to a dashboard
+Flexible layout
+Drag-and-drop arrangement of panels
+Professional export options
+High-resolution PNG/SVG for publications
+Fully interactive HTML reports for sharing
 🛠 Technical Architecture
 
-VizDash Pro is a single-file application, meaning all logic is embedded in the HTML. This ensures portability and privacy (your data never leaves your browser).
+VizDash Pro is implemented as a single-file HTML application, ensuring portability and full data privacy (no server-side processing).
 
-Rendering Engine: Plotly.js (Primary)
+Rendering Engine: Plotly.js
+Data Parsing: PapaParse
+Math Rendering: MathJax & KaTeX
+UI Framework: Tailwind CSS
+Layout Management: Sortable.js
 
-Data Parsing: PapaParse (CSV/TSV)
+Performance Complexity:
+Most operations scale linearly with data size:
 
-Mathematical Rendering: MathJax & KaTeX
-
-Layout Management: Tailwind CSS & Sortable.js
-
-Complexity: 
-𝑂
-(
-𝑁
-)
 O(N)
- data processing for most visualizations.
-
 📖 Quick Start Guide
-
-Launch: Open vizdash-pro.html in any modern web browser (Chrome, Firefox, Edge, Safari).
-
-Load Data: Navigate to the Data Ingestion tab. Upload your CSV or click "Load Sample Data."
-
-Visualize:
-
-Go to the Visualization Studio tab.
-
-Select a plot type (e.g., Scatter Plot).
-
-Add a Layer and map the X and Y columns from your dataset.
-
-Click Render.
-
-Analyze: Navigate to the Statistical Models tab to run regressions or T-tests on your loaded columns.
-
-Curate: Click "Add to Dashboard" on any plot you want to save.
-
-Export: Go to the Dashboard tab and export your final report as an HTML file.
-
+Launch
+Open vizdash-pro.html in any modern browser (Chrome, Firefox, Edge, Safari)
+Load Data
+Go to Data Ingestion
+Upload a dataset or load a sample
+Create Visualizations
+Navigate to Visualization Studio
+Select a plot type
+Add a layer and map axes
+Click Render
+Run Analysis
+Open Statistical Models
+Perform regression or hypothesis testing
+Build Dashboard
+Click Add to Dashboard for any result
+Export Results
+Export as high-quality images or interactive HTML reports
 ⚖️ License
 
-This project is provided as a professional-grade open-source tool for researchers and data analysts. Free for personal, academic, and commercial use.
+VizDash Pro is an open-source, professional-grade tool.
+
+Free for academic, personal, and commercial use
+Designed to support research, data science, and analytical workflows

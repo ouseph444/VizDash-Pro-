@@ -1,0 +1,2545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VizDash Pro — Scientific Visualization &amp; Statistical Studio</title>
+<meta name="description" content="Publication-grade browser visualization studio: layered datasets, LaTeX labels, log/linear axes, scientific contour plots, statistical inference.">
+
+<!-- MathJax MUST come before Plotly for LaTeX in plot titles/labels -->
+<script>
+window.MathJax = {
+  tex: { inlineMath:[['$','$'],['\\(','\\)']], displayMath:[['$$','$$']] },
+  svg: { fontCache:'global' }, startup:{ typeset:false }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-primary:#0a0e1a;--bg-secondary:#111827;--bg-tertiary:#1a2235;
+  --bg-card:#1e293b;--bg-card-hover:#243147;--bg-input:#0f172a;--bg-elevated:#253350;
+  --text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-tertiary:#64748b;--text-muted:#475569;
+  --accent:#6366f1;--accent-h:#818cf8;--accent2:#8b5cf6;--accent3:#a78bfa;
+  --success:#10b981;--warning:#f59e0b;--error:#ef4444;--info:#3b82f6;--cyan:#06b6d4;--rose:#f43f5e;
+  --border1:#1e293b;--border2:#334155;--border-a:rgba(99,102,241,0.3);
+  --sh-md:0 4px 12px rgba(0,0,0,0.4);--sh-lg:0 8px 32px rgba(0,0,0,0.5);--sh-xl:0 16px 48px rgba(0,0,0,0.6);
+  --sh-glow:0 0 20px rgba(99,102,241,0.15);
+  --r-sm:6px;--r-md:10px;--r-lg:16px;
+  --tf:150ms cubic-bezier(.4,0,.2,1);--tb:250ms cubic-bezier(.4,0,.2,1);
+  --font:'Inter',-apple-system,system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
+}
+[data-theme="light"]{
+  --bg-primary:#f8fafc;--bg-secondary:#f1f5f9;--bg-tertiary:#e2e8f0;
+  --bg-card:#fff;--bg-card-hover:#f8fafc;--bg-input:#f1f5f9;--bg-elevated:#e2e8f0;
+  --text-primary:#0f172a;--text-secondary:#475569;--text-tertiary:#94a3b8;
+  --border1:#e2e8f0;--border2:#cbd5e1;
+}
+[data-theme="publication"]{
+  --bg-primary:#fefefe;--bg-secondary:#fafafa;--bg-tertiary:#f0f0f0;
+  --bg-card:#fff;--bg-input:#f5f5f5;--bg-elevated:#eaeaea;
+  --text-primary:#1a1a1a;--text-secondary:#555;--text-tertiary:#999;
+  --accent:#2c3e50;--accent-h:#34495e;--accent2:#2980b9;
+  --border1:#e0e0e0;--border2:#d0d0d0;
+}
+[data-theme="midnight"]{
+  --bg-primary:#020617;--bg-secondary:#0c1222;--bg-tertiary:#131b2e;
+  --bg-card:#162032;--bg-card-hover:#1c2a42;--bg-input:#0a1020;
+  --accent:#06b6d4;--accent-h:#22d3ee;--accent2:#8b5cf6;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:54px;background:var(--bg-secondary);border-bottom:1px solid var(--border1);flex-shrink:0;z-index:100}
+.topbar-brand{display:flex;align-items:center;gap:11px}
+.logo{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#fff}
+.topbar-brand h1{font-size:17px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar-brand .sub{font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+.topbar-actions{display:flex;align-items:center;gap:7px}
+
+/* LAYOUT */
+.main-layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:250px;min-width:250px;background:var(--bg-secondary);border-right:1px solid var(--border1);display:flex;flex-direction:column;overflow:hidden;transition:width var(--tb),min-width var(--tb)}
+.sidebar-nav{padding:7px;flex:1;overflow-y:auto}
+.sidebar-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r-sm);cursor:pointer;transition:all var(--tf);color:var(--text-secondary);font-size:13px;font-weight:500}
+.sidebar-item:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+.sidebar-item.active{background:rgba(99,102,241,.12);color:var(--accent);border-left:3px solid var(--accent)}
+.sidebar-item svg{width:17px;height:17px;flex-shrink:0}
+.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-tertiary);padding:14px 11px 5px;user-select:none}
+
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-primary)}
+.tab-content{flex:1;overflow-y:auto;padding:18px}
+.tab-content.hidden{display:none}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:var(--r-sm);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--tf);white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,.3)}
+.btn-primary:hover{background:var(--accent-h);transform:translateY(-1px)}
+.btn-secondary{background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border2)}
+.btn-secondary:hover{background:var(--bg-elevated);border-color:var(--accent)}
+.btn-ghost{background:transparent;color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--error);color:#fff}
+.btn-sm{padding:4px 9px;font-size:12px}
+.btn-lg{padding:11px 22px;font-size:15px}
+.btn-icon{width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--r-sm);background:var(--bg-tertiary);border:1px solid var(--border1);color:var(--text-secondary);cursor:pointer;transition:all var(--tf)}
+.btn-icon:hover{background:var(--bg-elevated);color:var(--text-primary);border-color:var(--accent)}
+
+/* CARDS */
+.card{background:var(--bg-card);border:1px solid var(--border1);border-radius:var(--r-md);padding:16px;transition:all var(--tb)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border1)}
+.card-title{font-size:14px;font-weight:700;color:var(--text-primary)}
+.card-sub{font-size:11px;color:var(--text-tertiary);margin-top:2px}
+
+/* FORMS */
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.fi,.fs,.fta{width:100%;padding:8px 11px;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border1);border-radius:var(--r-sm);font-family:var(--font);font-size:13px;transition:all var(--tf);outline:none}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+.fs{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:28px}
+.fchk{display:flex;align-items:center;gap:7px;cursor:pointer;margin-bottom:8px}
+.fchk input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+.cc2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cc3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:600}
+.badge-p{background:rgba(99,102,241,.15);color:var(--accent)}
+.badge-s{background:rgba(16,185,129,.15);color:var(--success)}
+.badge-w{background:rgba(245,158,11,.15);color:var(--warning)}
+.badge-i{background:rgba(59,130,246,.15);color:var(--info)}
+.badge-r{background:rgba(244,63,94,.15);color:var(--rose)}
+
+/* TABS */
+.tab-bar{display:flex;border-bottom:1px solid var(--border1);padding:0;background:var(--bg-secondary)}
+.tab-btn{padding:11px 16px;border:none;background:none;color:var(--text-tertiary);font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all var(--tf);font-family:var(--font)}
+.tab-btn:hover{color:var(--text-primary)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* DATA TABLE */
+.dt-wrap{overflow:auto;max-height:380px;border-radius:var(--r-sm)}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{position:sticky;top:0;z-index:2;background:var(--bg-tertiary);color:var(--text-secondary);padding:7px 11px;text-align:left;font-weight:600;border-bottom:2px solid var(--border2);text-transform:uppercase;letter-spacing:.5px;font-size:11px;white-space:nowrap}
+.dt td{padding:5px 11px;border-bottom:1px solid var(--border1);color:var(--text-primary);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.dt tr:hover td{background:var(--bg-card-hover)}
+.col-type{font-family:var(--mono);font-size:10px;color:var(--cyan);padding:1px 5px;background:rgba(6,182,212,.1);border-radius:3px}
+
+/* STATS GRID */
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.sc{background:var(--bg-card);border:1px solid var(--border1);border-radius:var(--r-sm);padding:12px;text-align:center}
+.sv{font-size:20px;font-weight:800;color:var(--accent)}
+.sl{font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+
+/* UPLOAD ZONE */
+.uz{border:2px dashed var(--border2);border-radius:var(--r-lg);padding:36px;text-align:center;transition:all var(--tb);cursor:pointer}
+.uz:hover,.uz.dv{border-color:var(--accent);background:rgba(99,102,241,.05)}
+.uz svg{width:44px;height:44px;color:var(--accent);margin-bottom:10px;opacity:.6}
+
+/* PREVIEW PANE */
+.preview-pane{background:var(--bg-card);border:1px solid var(--border1);border-radius:var(--r-md);overflow:hidden;min-height:440px;position:relative}
+.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:440px;color:var(--text-tertiary);gap:10px;padding:20px;text-align:center}
+.ph svg{width:56px;height:56px;opacity:.25}
+
+/* BUILDER */
+.builder{display:grid;grid-template-columns:360px 1fr;gap:18px;min-height:calc(100vh - 160px)}
+.builder-sidebar{overflow-y:auto;padding-right:6px}
+.builder-main{display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px;padding:2px}
+.dash-cell{background:var(--bg-card);border:1px solid var(--border1);border-radius:var(--r-md);padding:11px;min-height:360px;transition:box-shadow var(--tb)}
+.dash-cell:hover{box-shadow:var(--sh-lg)}
+.dash-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;cursor:grab}
+.dash-title{font-size:13px;font-weight:600;color:var(--text-primary)}
+.dash-acts{display:flex;gap:4px}
+.dash-acts button{width:24px;height:24px;border:none;border-radius:4px;background:var(--bg-tertiary);color:var(--text-tertiary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all var(--tf)}
+.dash-acts button:hover{background:var(--bg-elevated);color:var(--text-primary)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity var(--tb)}
+.modal-overlay.active{opacity:1;pointer-events:all}
+.modal{background:var(--bg-card);border:1px solid var(--border1);border-radius:var(--r-lg);padding:22px;width:90%;max-width:580px;max-height:80vh;overflow-y:auto;box-shadow:var(--sh-xl)}
+
+/* NOTIFICATION */
+.notif{position:fixed;bottom:18px;right:18px;background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-md);padding:12px 18px;box-shadow:var(--sh-xl);z-index:2000;display:flex;align-items:center;gap:9px;transform:translateX(120%);transition:transform .35s cubic-bezier(.4,0,.2,1);max-width:340px}
+.notif.show{transform:translateX(0)}
+.notif.success{border-left:3px solid var(--success)}
+.notif.error{border-left:3px solid var(--error)}
+.notif.info{border-left:3px solid var(--info)}
+
+/* LATEX PREVIEW */
+.latex-preview{font-size:13px;min-height:22px;padding:3px 6px;border-radius:4px;background:rgba(99,102,241,.06);margin-top:4px;color:var(--text-secondary);overflow-x:auto}
+.latex-preview.error-lx{color:var(--error);font-size:11px}
+
+/* LAYER CARD */
+.layer-card{border:1px solid var(--border2);border-radius:var(--r-md);padding:12px;margin-bottom:9px;background:var(--bg-card);transition:border-color .2s}
+.layer-card:hover{border-color:var(--accent)}
+.layer-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+
+/* REFLINE ITEM */
+.rl-item{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:6px;border-left:3px solid #888}
+
+/* MODEL RESULTS */
+.mr{background:var(--bg-card);border:1px solid var(--border1);border-radius:var(--r-md);padding:14px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;line-height:1.8;max-height:380px;overflow-y:auto}
+.mr .c{color:var(--accent);font-weight:600}
+.mr .s{color:var(--success)}
+.mr .ns{color:var(--error)}
+
+/* HINT */
+.hint{font-size:11px;color:var(--text-tertiary);background:rgba(99,102,241,.06);border-left:3px solid var(--accent);padding:6px 10px;border-radius:0 4px 4px 0;margin-bottom:10px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeIn .35s ease-out}
+@media(max-width:1024px){.builder{grid-template-columns:1fr}.sidebar{width:52px;min-width:52px}.sidebar .sidebar-label,.sidebar .section-title{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ===== TOPBAR ===== -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="logo">V</div>
+    <div>
+      <h1>VizDash Pro</h1>
+      <div class="sub">Scientific Visualization · Statistical Studio</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn-icon" onclick="document.getElementById('exportModal').classList.add('active')" title="Export Dashboard">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+    <select class="fs" style="width:128px;padding:5px 26px 5px 9px" onchange="setTheme(this.value)">
+      <option value="dark">🌙 Dark</option>
+      <option value="light">☀️ Light</option>
+      <option value="publication">📄 Publication</option>
+      <option value="midnight">🌌 Midnight</option>
+    </select>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<div class="main-layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-nav">
+      <div class="section-title">Workspace</div>
+      <div class="sidebar-item active" data-tab="data" onclick="switchTab('data')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        <span class="sidebar-label">Data</span>
+      </div>
+      <div class="sidebar-item" data-tab="visualize" onclick="switchTab('visualize')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span class="sidebar-label">Visualize</span>
+      </div>
+      <div class="sidebar-item" data-tab="scicontour" onclick="switchTab('scicontour')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12 C7 7 12 5 17 10 21 13 21 12"/><path d="M3 17 C6 15 10 14 14 17 17 19 21 18"/></svg>
+        <span class="sidebar-label">Sci Contour</span>
+      </div>
+      <div class="sidebar-item" data-tab="statistics" onclick="switchTab('statistics')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <span class="sidebar-label">Statistics</span>
+      </div>
+      <div class="sidebar-item" data-tab="dashboard" onclick="switchTab('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span class="sidebar-label">Dashboard</span>
+      </div>
+      <div class="section-title">Tools</div>
+      <div class="sidebar-item" data-tab="recommendations" onclick="switchTab('recommendations')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span class="sidebar-label">Smart Suggest</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content-area">
+
+    <!-- ===== DATA TAB ===== -->
+    <div class="tab-content" id="tab-data">
+      <div class="animate-in">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <div>
+            <h2 style="font-size:21px;font-weight:800">Data Ingestion</h2>
+            <p style="color:var(--text-tertiary);font-size:13px;margin-top:2px">Upload any file: CSV · TSV · JSON · .dat · .txt (space/tab separated)</p>
+          </div>
+        </div>
+
+        <label class="uz" id="uploadZone" for="mainFileInput" style="display:block;cursor:pointer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <h3 style="font-size:15px;color:var(--text-primary);margin-bottom:6px">Drop file here or click to browse</h3>
+          <p style="font-size:13px">CSV · TSV · JSON · .dat · .txt — auto-detected, headers optional</p>
+          <p style="margin-top:10px"><span style="background:var(--accent);color:#fff;padding:6px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600">Choose File</span></p>
+          <input type="file" id="mainFileInput" accept=".csv,.tsv,.json,.dat,.txt" style="display:none" onchange="handleMainUpload(event)">
+        </label>
+
+        <div id="dataSummary" style="display:none;margin-top:20px">
+          <div class="sg" id="dataStats"></div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header">
+              <div>
+                <div class="card-title" id="dsName">Dataset</div>
+                <div class="card-sub" id="dsInfo"></div>
+              </div>
+              <div style="display:flex;gap:7px">
+                <button class="btn btn-sm btn-secondary" onclick="switchTab('visualize')">📈 Visualize</button>
+                <button class="btn btn-sm btn-secondary" onclick="switchTab('scicontour')">⚛️ Sci Contour</button>
+                <button class="btn btn-sm btn-ghost" onclick="clearMainData()">✕ Clear</button>
+              </div>
+            </div>
+            <div style="margin-bottom:13px">
+              <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:7px">Detected Columns</div>
+              <div id="colBadges" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+            </div>
+            <div class="dt-wrap"><table class="dt" id="dataTable"></table></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Column Statistics</div></div>
+            <div class="dt-wrap"><table class="dt" id="colStatsTable"></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VISUALIZE TAB ===== -->
+    <div class="tab-content hidden" id="tab-visualize">
+      <div class="builder">
+        <!-- LEFT CONTROLS -->
+        <div class="builder-sidebar">
+
+          <!-- Plot Type -->
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header">
+              <div class="card-title">Plot Type</div>
+              <span class="badge badge-p" id="selPlotBadge">Line</span>
+            </div>
+            <div class="fg">
+              <select class="fs" id="plotCatFilter" onchange="filterPTypes(this.value)">
+                <option value="all">All Categories</option>
+                <option value="basic">Basic</option>
+                <option value="stat">Statistical</option>
+                <option value="multi">Multivariate</option>
+                <option value="3d">3D & Scientific</option>
+                <option value="ts">Time Series</option>
+                <option value="comp">Composition</option>
+                <option value="spec">Specialized</option>
+              </select>
+            </div>
+            <div id="plotTypeGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;max-height:280px;overflow-y:auto;padding:2px"></div>
+          </div>
+
+          <!-- Layered Datasets -->
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Dataset Layers</div>
+                <div class="card-sub">Overlay multiple files on one plot</div>
+              </div>
+              <button class="btn btn-sm btn-primary" onclick="addVizLayer()">+ Layer</button>
+            </div>
+            <div class="hint">Each layer loads its own file (any format) and maps columns independently. Upload once in Data tab to reuse, or load per-layer here.</div>
+            <div id="vizLayerList"></div>
+          </div>
+
+          <!-- Axis & Scale -->
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header">
+              <div class="card-title">Axes & Scale</div>
+              <span class="badge badge-i" style="font-size:9px">Matplotlib-level</span>
+            </div>
+            <!-- LaTeX-enabled labels -->
+            <div class="fg">
+              <label class="fl">Plot Title (LaTeX: $F_{x}$)</label>
+              <input class="fi latex-input" id="plotTitle" placeholder="e.g. $m_{A\'} vs f_{\\rm PBH}$" oninput="updateLatexPreview(this);schedulePreview()">
+              <div class="latex-preview" id="lp_plotTitle"></div>
+            </div>
+            <div class="cc2">
+              <div class="fg">
+                <label class="fl">X Label (LaTeX)</label>
+                <input class="fi latex-input" id="plotXLabel" placeholder="$x$" oninput="updateLatexPreview(this);schedulePreview()">
+                <div class="latex-preview" id="lp_plotXLabel"></div>
+              </div>
+              <div class="fg">
+                <label class="fl">Y Label (LaTeX)</label>
+                <input class="fi latex-input" id="plotYLabel" placeholder="$y$" oninput="updateLatexPreview(this);schedulePreview()">
+                <div class="latex-preview" id="lp_plotYLabel"></div>
+              </div>
+            </div>
+            <div class="cc2">
+              <div class="fg">
+                <label class="fl">X Scale</label>
+                <select class="fs" id="plotXScale" onchange="schedulePreview()">
+                  <option value="linear">Linear</option>
+                  <option value="log">Log₁₀</option>
+                  <option value="log2">Log₂</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label class="fl">Y Scale</label>
+                <select class="fs" id="plotYScale" onchange="schedulePreview()">
+                  <option value="linear">Linear</option>
+                  <option value="log">Log₁₀</option>
+                  <option value="log2">Log₂</option>
+                </select>
+              </div>
+            </div>
+            <div class="cc2">
+              <div class="fg"><label class="fl">X Min</label><input class="fi" id="pXmin" placeholder="auto" type="number" oninput="schedulePreview()"></div>
+              <div class="fg"><label class="fl">X Max</label><input class="fi" id="pXmax" placeholder="auto" type="number" oninput="schedulePreview()"></div>
+            </div>
+            <div class="cc2">
+              <div class="fg"><label class="fl">Y Min</label><input class="fi" id="pYmin" placeholder="auto" type="number" oninput="schedulePreview()"></div>
+              <div class="fg"><label class="fl">Y Max</label><input class="fi" id="pYmax" placeholder="auto" type="number" oninput="schedulePreview()"></div>
+            </div>
+          </div>
+
+          <!-- Styling -->
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header"><div class="card-title">Style</div></div>
+            <div class="cc2">
+              <div class="fg">
+                <label class="fl">Color Palette</label>
+                <select class="fs" id="plotPalette" onchange="schedulePreview()">
+                  <option value="publication">Publication</option>
+                  <option value="viridis">Viridis</option>
+                  <option value="plasma">Plasma</option>
+                  <option value="seaborn">Seaborn</option>
+                  <option value="matplotlib">Matplotlib</option>
+                  <option value="dark2">Dark2</option>
+                  <option value="set2">Set2</option>
+                  <option value="colorblind">Colorblind Safe</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label class="fl">Font Size</label>
+                <select class="fs" id="plotFont" onchange="schedulePreview()">
+                  <option value="10">10</option><option value="12" selected>12</option>
+                  <option value="14">14</option><option value="16">16</option><option value="18">18</option>
+                </select>
+              </div>
+            </div>
+            <div class="cc2">
+              <div class="fg">
+                <label class="fl">Marker</label>
+                <select class="fs" id="plotMarker" onchange="schedulePreview()">
+                  <option value="none">None</option><option value="circle">●  Circle</option>
+                  <option value="square">■  Square</option><option value="diamond">◆  Diamond</option>
+                  <option value="cross">+  Cross</option><option value="x">×  X</option>
+                  <option value="triangle-up">▲  Triangle</option><option value="star">★  Star</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label class="fl">Line Style</label>
+                <select class="fs" id="plotLineStyle" onchange="schedulePreview()">
+                  <option value="solid">─  Solid</option><option value="dash">╌  Dashed</option>
+                  <option value="dot">·  Dotted</option><option value="dashdot">─·  Dash-dot</option>
+                </select>
+              </div>
+            </div>
+            <div class="cc2">
+              <div class="fg"><label class="fl">Line Width</label><input class="fi" id="plotLW" type="number" value="2" step=".5" min=".5" oninput="schedulePreview()"></div>
+              <div class="fg"><label class="fl">Marker Size</label><input class="fi" id="plotMS" type="number" value="7" step="1" min="2" oninput="schedulePreview()"></div>
+            </div>
+            <div class="cc2">
+              <label class="fchk"><input type="checkbox" id="plotGrid" checked onchange="schedulePreview()"><span style="font-size:12px">Grid</span></label>
+              <label class="fchk"><input type="checkbox" id="plotLegend" checked onchange="schedulePreview()"><span style="font-size:12px">Legend</span></label>
+              <label class="fchk"><input type="checkbox" id="plotPubMode" checked onchange="schedulePreview()"><span style="font-size:12px">Pub. Mode</span></label>
+              <label class="fchk"><input type="checkbox" id="plotMirror" onchange="schedulePreview()"><span style="font-size:12px">Mirror axes</span></label>
+            </div>
+          </div>
+
+          <!-- Reference Lines -->
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header">
+              <div class="card-title">Reference Lines</div>
+              <span class="badge badge-w" style="font-size:9px">axhline / axvline</span>
+            </div>
+            <div class="hint">These lines appear on ALL rendered plots. Add horizontal (y=c) and vertical (x=c) lines.</div>
+            <div class="cc2" style="margin-bottom:8px">
+              <button class="btn btn-sm btn-secondary" onclick="openAddRefLine('h')">+ y = c (hline)</button>
+              <button class="btn btn-sm btn-secondary" onclick="openAddRefLine('v')">+ x = c (vline)</button>
+            </div>
+            <div id="refLineList"></div>
+          </div>
+
+          <!-- Export Size -->
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header"><div class="card-title">Export</div><span class="badge badge-r" style="font-size:9px">Q1 Journal</span></div>
+            <div class="cc2">
+              <div class="fg"><label class="fl">Width (px)</label><input class="fi" id="plotW" type="number" value="800"></div>
+              <div class="fg"><label class="fl">Height (px)</label><input class="fi" id="plotH" type="number" value="550"></div>
+            </div>
+            <div class="fg">
+              <label class="fl">Scale / DPI</label>
+              <select class="fs" id="plotScale">
+                <option value="1">Screen (1×)</option>
+                <option value="2">Print (2×)</option>
+                <option value="3" selected>Publication (3×)</option>
+                <option value="4">High-res (4×)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:7px;margin-bottom:18px">
+            <button class="btn btn-primary" onclick="renderVizPlot()" style="flex:1">🔄 Render</button>
+            <button class="btn btn-success" onclick="addCurrentToDash()" style="flex:1">➕ Dashboard</button>
+          </div>
+        </div>
+
+        <!-- RIGHT PREVIEW -->
+        <div class="builder-main">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <h3 style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:12px">
+              Preview
+              <label style="font-size:12px;font-weight:400;color:var(--text-secondary);display:flex;align-items:center;gap:4px;cursor:pointer">
+                <input type="checkbox" id="plotAutoRender" checked> Auto-render on changes
+              </label>
+            </h3>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-sm btn-primary" onclick="renderVizPlot()" style="box-shadow: 0 0 10px rgba(99,102,241,0.3)">🔄 Render</button>
+              <button class="btn btn-sm btn-secondary" onclick="downloadViz('png')">📷 PNG</button>
+              <button class="btn btn-sm btn-secondary" onclick="downloadViz('svg')">🎨 SVG</button>
+              <button class="btn btn-sm btn-secondary" onclick="downloadViz('html')">🌐 HTML</button>
+            </div>
+          </div>
+          <div class="preview-pane">
+            <div class="ph" id="vizPlaceholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              <p style="font-weight:600">Add a layer, select plot type, click Render</p>
+              <p style="font-size:12px">LaTeX in labels: use $...$  e.g. $\alpha$ → α</p>
+            </div>
+            <div id="vizPlot" style="width:100%;min-height:440px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SCI CONTOUR TAB ===== -->
+    <div class="tab-content hidden" id="tab-scicontour">
+      <div class="animate-in">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap">
+          <div>
+            <h2 style="font-size:21px;font-weight:800">⚛️ Scientific Contour Studio</h2>
+            <p style="color:var(--text-tertiary);font-size:13px">Multi-layer log/linear contour plots from any file type. Mirrors <code style="background:var(--bg-tertiary);padding:1px 5px;border-radius:3px">scipy.griddata + plt.contour</code>.</p>
+          </div>
+          <button class="btn btn-primary" onclick="renderSciContour()">🔄 Render</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:380px 1fr;gap:18px;min-height:calc(100vh - 210px)">
+          <!-- LEFT -->
+          <div style="overflow-y:auto;padding-right:5px">
+
+            <!-- Global settings -->
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header"><div class="card-title">Global Settings</div><span class="badge badge-r" style="font-size:9px">Publication</span></div>
+              <div class="cc2">
+                <div class="fg"><label class="fl">Signal Level (z*)</label><input class="fi" id="sci_z" type="number" value="9" step=".1"></div>
+                <div class="fg">
+                  <label class="fl">Grid N</label>
+                  <select class="fs" id="sci_gridN">
+                    <option value="100">100×100</option><option value="150">150×150</option>
+                    <option value="200" selected>200×200</option><option value="300">300×300</option>
+                  </select>
+                </div>
+              </div>
+              <div class="fg">
+                <label class="fl">Title (LaTeX)</label>
+                <input class="fi latex-input" id="sci_title" placeholder="$f_{\\rm PBH}$ vs $m_{A\'}$" oninput="updateLatexPreview(this)">
+                <div class="latex-preview" id="lp_sci_title"></div>
+              </div>
+              <div class="cc2">
+                <div class="fg">
+                  <label class="fl">X Label (LaTeX)</label>
+                  <input class="fi latex-input" id="sci_xLabel" placeholder="$m_{A\'} [\rm MeV]$" oninput="updateLatexPreview(this)">
+                  <div class="latex-preview" id="lp_sci_xLabel"></div>
+                </div>
+                <div class="fg">
+                  <label class="fl">Y Label (LaTeX)</label>
+                  <input class="fi latex-input" id="sci_yLabel" placeholder="$f_{\\rm PBH}$" oninput="updateLatexPreview(this)">
+                  <div class="latex-preview" id="lp_sci_yLabel"></div>
+                </div>
+              </div>
+              <div class="cc2">
+                <div class="fg">
+                  <label class="fl">X Scale</label>
+                  <select class="fs" id="sci_xScale">
+                    <option value="log" selected>Log₁₀</option><option value="linear">Linear</option>
+                  </select>
+                </div>
+                <div class="fg">
+                  <label class="fl">Y Scale</label>
+                  <select class="fs" id="sci_yScale">
+                    <option value="log" selected>Log₁₀</option><option value="linear">Linear</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+                <div class="fg"><label class="fl" style="font-size:9px">X min</label><input class="fi" id="sci_xMin" placeholder="auto"></div>
+                <div class="fg"><label class="fl" style="font-size:9px">X max</label><input class="fi" id="sci_xMax" placeholder="auto"></div>
+                <div class="fg"><label class="fl" style="font-size:9px">Y min</label><input class="fi" id="sci_yMin" placeholder="auto"></div>
+                <div class="fg"><label class="fl" style="font-size:9px">Y max</label><input class="fi" id="sci_yMax" placeholder="auto"></div>
+              </div>
+              <div class="cc2">
+                <div class="fg"><label class="fl">Line Width</label><input class="fi" id="sci_lw" type="number" value="2.5" step=".5"></div>
+                <div class="fg"><label class="fl">Fill Opacity</label><input class="fi" id="sci_fo" type="number" value="0.18" step=".02" min="0" max="1"></div>
+              </div>
+              <label class="fchk"><input type="checkbox" id="sci_pub" checked><span style="font-size:12px">Publication mode (white bg)</span></label>
+            </div>
+
+            <!-- Layers -->
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header">
+                <div><div class="card-title">Dataset Layers</div><div class="card-sub">Any file type · any columns</div></div>
+                <button class="btn btn-primary btn-sm" onclick="addSciLayer()">+ Layer</button>
+              </div>
+              <div class="hint">Load CSV/TSV/JSON/.dat/.txt per layer. Select which columns are X, Y (response), Z (significance). Enable fill to shade between contour and a horizontal level.</div>
+              <div id="sciLayerList"></div>
+            </div>
+
+            <!-- Reference Lines -->
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header"><div class="card-title">Reference Lines</div><span class="badge badge-w" style="font-size:9px">axhline / axvline</span></div>
+              <div class="cc2" style="margin-bottom:8px">
+                <button class="btn btn-sm btn-secondary" onclick="openAddRefLine('h','sci')">+ y = c</button>
+                <button class="btn btn-sm btn-secondary" onclick="openAddRefLine('v','sci')">+ x = c</button>
+              </div>
+              <div id="sciRefLineList"></div>
+            </div>
+
+            <!-- Annotations -->
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header"><div class="card-title">Text Annotations (plt.text)</div></div>
+              <div class="cc2">
+                <div class="fg"><label class="fl">x (data coords)</label><input class="fi" id="ann_x" placeholder="0.1"></div>
+                <div class="fg"><label class="fl">y (data coords)</label><input class="fi" id="ann_y" placeholder="1e-9"></div>
+              </div>
+              <div class="fg">
+                <label class="fl">Text (LaTeX)</label>
+                <input class="fi latex-input" id="ann_text" placeholder="$M_{\\rm PBH}=10^{15}$ g" oninput="updateLatexPreview(this)">
+                <div class="latex-preview" id="lp_ann_text"></div>
+              </div>
+              <div class="cc2">
+                <div class="fg"><label class="fl">Colour</label><input type="color" id="ann_color" value="#333333" style="width:100%;height:32px;border:none;border-radius:4px;cursor:pointer"></div>
+                <div class="fg"><label class="fl">Font size</label><input class="fi" id="ann_size" type="number" value="14" min="8"></div>
+              </div>
+              <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:8px" onclick="sciAddAnnotation()">+ Add</button>
+              <div id="sciAnnotList"></div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px">
+              <button class="btn btn-primary" onclick="renderSciContour()">🔄 Render Contours</button>
+              <div class="cc3">
+                <button class="btn btn-secondary btn-sm" onclick="sciExport('png')">📷 PNG</button>
+                <button class="btn btn-secondary btn-sm" onclick="sciExport('svg')">🎨 SVG</button>
+                <button class="btn btn-success btn-sm" onclick="sciAddToDash()">➕ Dash</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT -->
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="preview-pane" style="min-height:560px;flex:1">
+              <div class="ph" id="sciPh" style="position:absolute;inset:0;pointer-events:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".3"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12 C7 7 12 5 17 10 21 13 21 12"/><path d="M3 17 C6 14 10 13 14 17 17 19 21 18"/></svg>
+                <p style="font-weight:600">Add layers → Render</p>
+                <p style="font-size:12px">Supports any file type and log/linear axes</p>
+              </div>
+              <div id="sciPlot" style="width:100%;min-height:560px"></div>
+            </div>
+            <!-- How it works -->
+            <div class="card">
+              <div class="card-title" style="margin-bottom:10px">📐 Python → Browser equivalence</div>
+              <div class="cc2" style="font-size:12px">
+                <div>
+                  <div style="font-weight:700;color:var(--accent);margin-bottom:4px">Python (scipy / matplotlib)</div>
+                  <code style="display:block;white-space:pre;background:var(--bg-tertiary);padding:10px;border-radius:6px;font-size:11px;line-height:1.7">griddata((logX,logY), z,
+  (X,Y), method='linear')
+plt.contour(X,Y,Z,[level])
+plot_contour_with_fill(...)
+plt.axhline(y=c, ...)
+plt.axvline(x=c, ...)
+plt.text(x, y, r'$...$')
+ax.set_xscale('log')</code>
+                </div>
+                <div>
+                  <div style="font-weight:700;color:var(--success);margin-bottom:4px">VizDash Pro (browser)</div>
+                  <code style="display:block;white-space:pre;background:var(--bg-tertiary);padding:10px;border-radius:6px;font-size:11px;line-height:1.7">IDW on log-space grid
+  (200×200, configurable)
+Marching Squares tracer
+Filled polygon to y_fill
+Reference Lines panel
+Reference Lines panel
+Annotation panel (LaTeX)
+Log/Linear per axis</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STATISTICS TAB ===== -->
+    <div class="tab-content hidden" id="tab-statistics">
+      <div class="animate-in">
+        <h2 style="font-size:21px;font-weight:800;margin-bottom:4px">Statistical Modeling & Inference</h2>
+        <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px">Regression · Hypothesis Testing · Bayesian Inference · Confidence Contours</p>
+        <div class="tab-bar" style="padding:0;margin-bottom:16px;background:transparent">
+          <button class="tab-btn active" onclick="switchStatTab('regression',this)">Regression</button>
+          <button class="tab-btn" onclick="switchStatTab('hypothesis',this)">Hypothesis Test</button>
+          <button class="tab-btn" onclick="switchStatTab('bayesian',this)">Bayesian</button>
+          <button class="tab-btn" onclick="switchStatTab('confcontour',this)">Conf. Contours</button>
+        </div>
+
+        <!-- Regression -->
+        <div class="stat-panel" id="statpan-regression">
+          <div style="display:grid;grid-template-columns:280px 1fr;gap:18px">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:11px">Setup</div>
+              <div class="fg"><label class="fl">Model</label>
+                <select class="fs" id="regType" onchange="document.getElementById('polyDeg').closest('.fg').style.display=this.value==='poly'?'':'none'">
+                  <option value="linear">Simple Linear (OLS)</option><option value="multiple">Multiple Linear</option>
+                  <option value="poly">Polynomial</option><option value="logistic">Logistic</option>
+                </select>
+              </div>
+              <div class="fg" id="polyDeg" style="display:none"><label class="fl">Degree</label><select class="fs" id="polyN"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+              <div class="fg"><label class="fl">Dependent (Y)</label><select class="fs" id="regY"></select></div>
+              <div class="fg"><label class="fl">Independent (X)</label><div id="regXChecks"></div></div>
+              <label class="fchk"><input type="checkbox" id="regCI" checked><span style="font-size:12px">Confidence band</span></label>
+              <div class="fg"><label class="fl">CI Level</label><select class="fs" id="regCILevel"><option value=".90">90%</option><option value=".95" selected>95%</option><option value=".99">99%</option></select></div>
+              <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="runRegression()">Run</button>
+            </div>
+            <div>
+              <div id="regPlot" class="preview-pane" style="min-height:320px;margin-bottom:12px"></div>
+              <div class="mr" id="regResults"><span style="color:var(--text-tertiary)">Configure and run…</span></div>
+              <div style="display:flex;gap:7px;margin-top:8px">
+                <button class="btn btn-sm btn-success" onclick="addStatToDash('regPlot','Regression')">➕ Add Plot</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hypothesis -->
+        <div class="stat-panel" id="statpan-hypothesis" style="display:none">
+          <div style="display:grid;grid-template-columns:280px 1fr;gap:18px">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:11px">Setup</div>
+              <div class="fg"><label class="fl">Test</label>
+                <select class="fs" id="testType" onchange="buildTestFields()">
+                  <option value="ttest_ind">Independent T-Test</option>
+                  <option value="ttest_paired">Paired T-Test</option>
+                  <option value="ttest_one">One-Sample T-Test</option>
+                  <option value="anova">One-Way ANOVA</option>
+                  <option value="chi2">Chi-Squared</option>
+                  <option value="mannwhitney">Mann-Whitney U</option>
+                  <option value="ks">Kolmogorov-Smirnov</option>
+                </select>
+              </div>
+              <div id="testFields"></div>
+              <div class="fg"><label class="fl">α level</label><select class="fs" id="testAlpha"><option value=".01">0.01</option><option value=".05" selected>0.05</option><option value=".10">0.10</option></select></div>
+              <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="runHypTest()">Run Test</button>
+            </div>
+            <div>
+              <div id="hypPlot" class="preview-pane" style="min-height:320px;margin-bottom:12px"></div>
+              <div class="mr" id="hypResults"><span style="color:var(--text-tertiary)">Configure and run…</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bayesian -->
+        <div class="stat-panel" id="statpan-bayesian" style="display:none">
+          <div style="display:grid;grid-template-columns:280px 1fr;gap:18px">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:11px">Setup</div>
+              <div class="fg"><label class="fl">Variable</label><select class="fs" id="bayVar"></select></div>
+              <div class="fg"><label class="fl">Prior Mean</label><input class="fi" id="bayPriorM" type="number" value="0"></div>
+              <div class="fg"><label class="fl">Prior Std</label><input class="fi" id="bayPriorS" type="number" value="10"></div>
+              <div class="fg"><label class="fl">MCMC Iterations</label><select class="fs" id="bayIter"><option value="1000">1,000</option><option value="5000" selected>5,000</option><option value="10000">10,000</option></select></div>
+              <div class="fg"><label class="fl">Credible Interval</label><select class="fs" id="bayCI"><option value=".90">90%</option><option value=".95" selected>95%</option><option value=".99">99%</option></select></div>
+              <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="runBayesian()">Run Inference</button>
+            </div>
+            <div>
+              <div id="bayPostPlot" class="preview-pane" style="min-height:270px;margin-bottom:10px"></div>
+              <div id="bayTracePlot" class="preview-pane" style="min-height:220px;margin-bottom:10px"></div>
+              <div class="mr" id="bayResults"><span style="color:var(--text-tertiary)">Configure and run…</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Confidence Contours -->
+        <div class="stat-panel" id="statpan-confcontour" style="display:none">
+          <div style="display:grid;grid-template-columns:280px 1fr;gap:18px">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:11px">Setup</div>
+              <div class="fg"><label class="fl">X Parameter</label><select class="fs" id="ccX"></select></div>
+              <div class="fg"><label class="fl">Y Parameter</label><select class="fs" id="ccY"></select></div>
+              <div class="fg"><label class="fl">Type</label><select class="fs" id="ccType"><option value="2d">2D Contour</option><option value="3d">3D Surface</option></select></div>
+              <label class="fchk"><input type="checkbox" id="cc68" checked><span style="font-size:12px">68% (1σ)</span></label>
+              <label class="fchk"><input type="checkbox" id="cc95" checked><span style="font-size:12px">95% (2σ)</span></label>
+              <label class="fchk"><input type="checkbox" id="cc99" checked><span style="font-size:12px">99% (3σ)</span></label>
+              <button class="btn btn-primary" style="width:100%;margin-top:6px" onclick="runConfContour()">Generate</button>
+            </div>
+            <div><div id="ccPlot" class="preview-pane" style="min-height:460px"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD TAB ===== -->
+    <div class="tab-content hidden" id="tab-dashboard">
+      <div class="animate-in">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <div>
+            <h2 style="font-size:21px;font-weight:800">Dashboard</h2>
+            <p style="color:var(--text-tertiary);font-size:13px"><span id="dashCount">0</span> panels · drag to reorder</p>
+          </div>
+          <div style="display:flex;gap:7px;align-items:center">
+            <span style="font-size:12px;color:var(--text-secondary);font-weight:600;margin-right:4px">Layout (30 Formats):</span>
+            <select class="fs" id="dashGridFormat" style="width:240px" onchange="changeDashFormat(this.value)">
+              <optgroup label="Responsive & Density">
+                <option value="fluid">01. Fluid Auto-fill (Default 440px)</option>
+                <option value="masonry">02. Dense Masonry Box (Auto-Fit)</option>
+                <option value="small_g">03. Dense Nano Grid (250px grid)</option>
+                <option value="large_g">04. Large Presentation Grid (600px)</option>
+              </optgroup>
+              <optgroup label="Standard Even Columns">
+                <option value="1col">05. Single Column Focus (1x)</option>
+                <option value="2col">06. Two Columns Even (1:1)</option>
+                <option value="3col">07. Three Columns Even (1:1:1)</option>
+                <option value="4col">08. Four Columns Even (1:1:1:1)</option>
+                <option value="5col">09. Five Columns Even (1:1:1:1:1)</option>
+              </optgroup>
+              <optgroup label="Sidebars & Splits">
+                <option value="ls_n">10. Left Sidebar Narrow (1:3)</option>
+                <option value="rs_n">11. Right Sidebar Narrow (3:1)</option>
+                <option value="ls_w">12. Left Sidebar Wide (1:2)</option>
+                <option value="rs_w">13. Right Sidebar Wide (2:1)</option>
+                <option value="split_b">14. Bipartite Edge (1:4)</option>
+                <option value="split_e">15. Tripartite Edge (1:4:1)</option>
+              </optgroup>
+              <optgroup label="Mathematical Ratios">
+                <option value="gold_l">16. Golden Ratio Left (38.2% / 61.8%)</option>
+                <option value="gold_r">17. Golden Ratio Right (61.8% / 38.2%)</option>
+                <option value="fibo">18. Fibonacci Rule (1:1:2:3)</option>
+                <option value="trin">19. Trinity Split (1:2:3)</option>
+                <option value="trin_r">20. Reverse Trinity (3:2:1)</option>
+              </optgroup>
+              <optgroup label="Asymmetric & Focus">
+                <option value="cntr_3">21. Center Focus Triple (1:3:1)</option>
+                <option value="cntr_4">22. Center Focus Quad (1:2:2:1)</option>
+                <option value="asym_1">23. Balanced Asymmetric (1:2:1)</option>
+                <option value="asym_2">24. Outer Asymmetric (2:1:2)</option>
+                <option value="quad_a">25. Quad Asymmetric (2:1:1:2)</option>
+              </optgroup>
+              <optgroup label="Fixed Emulators & Print">
+                <option value="widescr">26. Widescreen View (30vw chunks)</option>
+                <option value="uwidescr">27. Ultra-Wide View (20vw chunks)</option>
+                <option value="a4_p">28. A4 Print Portrait Equivalent</option>
+                <option value="a4_l">29. A4 Print Landscape Equivalent</option>
+                <option value="mobile">30. Mobile Emulator (375px vertical)</option>
+              </optgroup>
+            </select>
+            <div style="width:1px;height:24px;background:var(--border1);margin:0 4px"></div>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('exportModal').classList.add('active')">📦 Export</button>
+            <button class="btn btn-danger btn-sm" onclick="clearDashboard()">🗑 Clear</button>
+          </div>
+        </div>
+        <div class="dash-grid" id="dashGrid">
+          <div id="dashEmpty" style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-tertiary)">
+            <p style="font-size:42px;margin-bottom:10px">📊</p>
+            <p style="font-size:15px;font-weight:600">Dashboard is empty</p>
+            <p style="font-size:12px;margin-top:4px">Add plots from Visualize, Sci Contour, or Statistics tabs</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SMART SUGGEST TAB ===== -->
+    <div class="tab-content hidden" id="tab-recommendations">
+      <div class="animate-in">
+        <h2 style="font-size:21px;font-weight:800;margin-bottom:4px">💡 Smart Suggest</h2>
+        <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:18px">Data-aware plot and model recommendations based on your loaded dataset.</p>
+        <div id="recoContent">
+          <div style="text-align:center;padding:50px;color:var(--text-tertiary)">
+            <p style="font-size:38px;margin-bottom:12px">📂</p>
+            <p style="font-size:15px;font-weight:600">Load a dataset first</p>
+            <p style="font-size:13px;margin-top:4px">Go to the Data tab and upload a file, then come back here.</p>
+            <button class="btn btn-primary" style="margin-top:16px" onclick="switchTab('data')">→ Go to Data Tab</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- ===== REFERENCE LINE MODAL ===== -->
+<div class="modal-overlay" id="refLineModal">
+  <div class="modal" style="max-width:400px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:700" id="rlModalTitle">Add Reference Line</div>
+      <button class="btn-icon" style="width:26px;height:26px;font-size:13px" onclick="closeRefLineModal()">✕</button>
+    </div>
+    <div class="fg"><label class="fl" id="rlValLabel">y value (data coords)</label><input class="fi" id="rl_val" placeholder="e.g. 2e-8"></div>
+    <div class="fg">
+      <label class="fl">Label (LaTeX)</label>
+      <input class="fi latex-input" id="rl_label" placeholder="$y = 2\times10^{-8}$" oninput="updateLatexPreview(this)">
+      <div class="latex-preview" id="lp_rl_label"></div>
+    </div>
+    <div class="cc2">
+      <div class="fg"><label class="fl">Colour</label><input type="color" id="rl_color" value="#333333" style="width:100%;height:32px;border:none;border-radius:4px;cursor:pointer"></div>
+      <div class="fg"><label class="fl">Style</label>
+        <select class="fs" id="rl_style">
+          <option value="dash">Dashed</option><option value="dot">Dotted</option>
+          <option value="solid">Solid</option><option value="dashdot">Dash-dot</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Width</label><input class="fi" id="rl_width" type="number" value="2" min=".5" step=".5"></div>
+    <input type="hidden" id="rl_ctx">
+    <input type="hidden" id="rl_axis">
+    <button class="btn btn-primary" style="width:100%;margin-top:4px" onclick="confirmAddRefLine()">Add Line</button>
+  </div>
+</div>
+
+<!-- ===== EXPORT MODAL ===== -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:700">Export Dashboard</div>
+      <button class="btn-icon" style="width:26px;height:26px;font-size:13px" onclick="document.getElementById('exportModal').classList.remove('active')">✕</button>
+    </div>
+    <div style="display:grid;gap:9px">
+      <button class="btn btn-secondary btn-lg" onclick="expJSON()" style="text-align:left;padding:14px"><span>📋</span> <div><strong>JSON Config</strong><br><small style="color:var(--text-tertiary)">Save layout as JSON</small></div></button>
+      <button class="btn btn-secondary btn-lg" onclick="expHTML()" style="text-align:left;padding:14px"><span>🌐</span> <div><strong>Self-contained HTML</strong><br><small style="color:var(--text-tertiary)">Full interactive dashboard</small></div></button>
+      <button class="btn btn-secondary btn-lg" onclick="expAllPNG()" style="text-align:left;padding:14px"><span>📷</span> <div><strong>All Plots as PNG</strong><br><small style="color:var(--text-tertiary)">Publication-ready (3× scale)</small></div></button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif">
+  <span id="notifIcon">✓</span><span id="notifText"></span>
+</div>
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+'use strict';
+
+// ============================================================
+// STATE & HELPERS
+// ============================================================
+function esc(s) { const d=document.createElement('div'); d.appendChild(document.createTextNode(String(s??''))); return d.innerHTML; }
+function isNumericCol(data, col) { const sample = data.slice(0, 20).map(r => r[col]).filter(v => v != null); return sample.length > 0 && sample.every(v => !isNaN(parseFloat(v))); }
+
+const APP = {
+  data: null, columns: [], colTypes: {}, numCols: [], catCols: [], dtCols: [],
+  fileName: '', plotType: 'line', dashPanels: [], dashId: 0,
+  _previewTimer: null
+};
+
+const VIZ_LAYERS = [];   // layers for Visualize tab
+const SCI_LAYERS = [];   // layers for Sci Contour
+const SCI_HLINES = [];   // sci reference lines
+const SCI_ANNOTS = [];   // sci annotations
+const REF_LINES  = [];   // global ref lines (vizualize tab)
+let SCI_LID = 0, VIZ_LID = 0;
+
+// ============================================================
+// COLOUR PALETTES
+// ============================================================
+const PAL = {
+  publication:  ['#2c3e50','#e74c3c','#2980b9','#27ae60','#f39c12','#8e44ad','#16a085','#d35400'],
+  viridis:      ['#440154','#482878','#3e4989','#31688e','#26828e','#1f9e89','#35b779','#6ece58','#b5de2b','#fde725'],
+  plasma:       ['#0d0887','#7201a8','#b83289','#e0674e','#f5a932','#f0f921'],
+  seaborn:      ['#4c72b0','#dd8452','#55a868','#c44e52','#8172b3','#937860','#da8bc3','#8c8c8c','#ccb974','#64b5cd'],
+  matplotlib:   ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf'],
+  dark2:        ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666'],
+  set2:         ['#66c2a5','#fc8d62','#8da0cb','#e78ac3','#a6d854','#ffd92f','#e5c494','#b3b3b3'],
+  colorblind:   ['#0072B2','#E69F00','#009E73','#CC79A7','#56B4E9','#D55E00','#F0E442','#000000']
+};
+
+function getPal() { return PAL[document.getElementById('plotPalette')?.value || 'publication'] || PAL.publication; }
+
+// ============================================================
+// LATEX PREVIEW (KaTeX)
+// ============================================================
+function updateLatexPreview(input) {
+  const id = input.id;
+  const preview = document.getElementById('lp_' + id);
+  if (!preview) return;
+  const val = input.value.trim();
+  if (!val) { preview.textContent = ''; return; }
+  try {
+    const cleaned = val.replace(/\\\\/g, '\\');
+    katex.render(cleaned.replace(/\$(.*?)\$/g, '$1').replace(/^\$|\$$/g,''), preview, { throwOnError: true, displayMode: false });
+    preview.classList.remove('error-lx');
+  } catch(e) {
+    preview.textContent = val;  // fallback: show raw
+    preview.classList.add('error-lx');
+  }
+}
+
+// ============================================================
+// THEME
+// ============================================================
+function setTheme(t) {
+  if (t === 'dark') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id)?.classList.remove('hidden');
+  document.querySelector(`.sidebar-item[data-tab="${id}"]`)?.classList.add('active');
+  if (id === 'statistics') populateStatFields();
+  if (id === 'recommendations') buildSmartRecommendations();
+}
+function switchStatTab(panel, btn) {
+  document.querySelectorAll('.stat-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('statpan-' + panel).style.display = '';
+  btn.classList.add('active');
+}
+
+// ============================================================
+// UNIVERSAL FILE PARSER
+// ============================================================
+function parseAnyFile(file, callback) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    if (ext === 'json') {
+      try {
+        let json = JSON.parse(text);
+        if (!Array.isArray(json)) json = [json];
+        callback({ data: json, type: 'json', hasHeaders: true });
+      } catch(err) { notify('Invalid JSON: ' + err.message, 'error'); }
+    } else if (ext === 'csv') {
+      Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true,
+        complete: r => callback({ data: r.data, type: 'csv', hasHeaders: true, headers: r.meta.fields }) });
+    } else if (ext === 'tsv') {
+      Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true, delimiter: '\t',
+        complete: r => callback({ data: r.data, type: 'tsv', hasHeaders: true, headers: r.meta.fields }) });
+    } else {
+      // .dat / .txt / unknown — space/tab separated, optionally with # header
+      const rows = [], lines = text.trim().split('\n');
+      let headers = null;
+      lines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        if (line.startsWith('#')) {
+          const possible = line.substring(1).trim().split(/\s+/);
+          if (possible.every(p => isNaN(p))) headers = possible;
+          return;
+        }
+        const cols = line.split(/\s+/);
+        if (cols.every(c => !isNaN(c))) rows.push(cols.map(Number));
+      });
+      // Convert to object array
+      const colNames = headers || rows[0]?.map((_, i) => `col${i}`) || [];
+      const data = rows.map(r => {
+        const obj = {};
+        colNames.forEach((h, i) => obj[h] = r[i] ?? null);
+        return obj;
+      });
+      callback({ data, type: 'dat', hasHeaders: !!headers, headers: colNames });
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// MAIN DATA TAB
+// ============================================================
+function handleMainUpload(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  notify(`Reading ${file.name}…`, 'info');
+  parseAnyFile(file, result => {
+    if (!result || !result.data || !result.data.length) {
+      notify('File appears empty or could not be parsed', 'error'); return;
+    }
+    loadMainData(result.data, file.name);
+  });
+}
+
+function setupDropZone() {
+  const z = document.getElementById('uploadZone');
+  if (!z) return;
+  ['dragenter','dragover'].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.add('dv'); }));
+  ['dragleave','drop'].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.remove('dv'); }));
+  z.addEventListener('drop', ev => {
+    ev.preventDefault(); z.classList.remove('dv');
+    const f = ev.dataTransfer.files[0];
+    if (f) {
+      notify(`Reading ${f.name}…`, 'info');
+      parseAnyFile(f, r => { if (r?.data?.length) loadMainData(r.data, f.name); else notify('Could not parse dropped file','error'); });
+    }
+  });
+}
+
+function loadMainData(data, name) {
+  APP.data = data; APP.fileName = name;
+  APP.columns = Object.keys(data[0] || {});
+  if (!APP.columns.length) { notify('No columns detected in file', 'error'); return; }
+  detectColTypes();
+  renderDataSummary();
+  notify(`✓ Loaded ${data.length} rows × ${APP.columns.length} cols from "${name}"`, 'success');
+  populateStatFields();
+  buildSmartRecommendations();
+}
+
+function detectColTypes() {
+  APP.colTypes = {}; APP.numCols = []; APP.catCols = []; APP.dtCols = [];
+  APP.columns.forEach(col => {
+    const sample = APP.data.slice(0,50).map(r => r[col]).filter(v => v != null && v !== '');
+    if (!sample.length) { APP.colTypes[col] = 'unknown'; return; }
+    if (sample.every(v => typeof v === 'string' && !isNaN(Date.parse(v)) && v.length > 6)) {
+      APP.colTypes[col] = 'datetime'; APP.dtCols.push(col); return;
+    }
+    if (sample.every(v => typeof v === 'number' || (!isNaN(parseFloat(v)) && isFinite(v)))) {
+      APP.colTypes[col] = 'numeric'; APP.numCols.push(col); return;
+    }
+    APP.colTypes[col] = 'categorical'; APP.catCols.push(col);
+  });
+}
+
+function clearMainData() {
+  APP.data = null; APP.columns = []; APP.colTypes = {}; APP.numCols = []; APP.catCols = []; APP.dtCols = [];
+  VIZ_LAYERS.length = 0;
+  VIZ_LID = 0;
+  renderVizLayers();
+  schedulePreview();
+  document.getElementById('dataSummary').style.display = 'none';
+  document.getElementById('uploadZone').style.display = 'block';
+  // reset the file input so the same file can be re-selected
+  const inp = document.getElementById('mainFileInput');
+  if (inp) inp.value = '';
+}
+
+function renderDataSummary() {
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('dataSummary').style.display = '';
+  document.getElementById('dsName').textContent = APP.fileName;
+  document.getElementById('dsInfo').textContent = `${APP.data.length} rows × ${APP.columns.length} cols · ${APP.numCols.length} numeric, ${APP.catCols.length} categorical, ${APP.dtCols.length} datetime`;
+
+  document.getElementById('dataStats').innerHTML = [
+    ['Rows', APP.data.length],['Cols', APP.columns.length],
+    ['Numeric', APP.numCols.length],['Categorical', APP.catCols.length],
+    ['Datetime', APP.dtCols.length],['Missing', countMissing()]
+  ].map(([l,v]) => `<div class="sc"><div class="sv">${v}</div><div class="sl">${l}</div></div>`).join('');
+
+  document.getElementById('colBadges').innerHTML = APP.columns.map(col => {
+    const t = APP.colTypes[col];
+    const cls = t==='numeric'?'badge-p':t==='datetime'?'badge-w':'badge-s';
+    return `<span class="badge ${cls}">${col} <span class="col-type">${t}</span></span>`;
+  }).join('');
+
+  const rows = APP.data.slice(0,100);
+  let th = '<thead><tr>' + APP.columns.map(c => `<th>${c}</th>`).join('') + '</tr></thead>';
+  let tb = '<tbody>' + rows.map(r => '<tr>' + APP.columns.map(c => `<td>${r[c] ?? '—'}</td>`).join('') + '</tr>').join('') + '</tbody>';
+  document.getElementById('dataTable').innerHTML = th + tb;
+  renderColStats();
+}
+
+function countMissing() {
+  let n = 0;
+  APP.data?.forEach(r => APP.columns.forEach(c => { if (r[c] == null || r[c] === '') n++; }));
+  return n;
+}
+
+function renderColStats() {
+  let html = '<thead><tr><th>Column</th><th>Type</th><th>Non-Null</th><th>Mean</th><th>Std</th><th>Min</th><th>Median</th><th>Max</th><th>Unique</th></tr></thead><tbody>';
+  APP.columns.forEach(col => {
+    const vals = APP.data.map(r => r[col]).filter(v => v != null && v !== '');
+    const t = APP.colTypes[col];
+    let mn='—',sd='—',mi='—',md='—',mx='—';
+    if (t === 'numeric') {
+      const nums = vals.map(Number).filter(n => !isNaN(n));
+      if (nums.length) {
+        mn = (nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(4);
+        const m = parseFloat(mn);
+        sd = Math.sqrt(nums.reduce((a,b)=>a+(b-m)**2,0)/(nums.length-1||1)).toFixed(4);
+        nums.sort((a,b)=>a-b);
+        mi = nums[0].toExponential(3); mx = nums[nums.length-1].toExponential(3);
+        md = nums.length%2 ? nums[Math.floor(nums.length/2)].toFixed(4) : ((nums[nums.length/2-1]+nums[nums.length/2])/2).toFixed(4);
+      }
+    }
+    html += `<tr><td><strong>${col}</strong></td><td><span class="col-type">${t}</span></td><td>${vals.length}</td><td>${mn}</td><td>${sd}</td><td>${mi}</td><td>${md}</td><td>${mx}</td><td>${new Set(vals).size}</td></tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('colStatsTable').innerHTML = html;
+}
+
+// ============================================================
+// PLOT TYPE REGISTRY
+// ============================================================
+const PLOT_TYPES = [
+  // Basic
+  {id:'line',n:'Line Plot',i:'📈',c:'basic',lib:'plt.plot'},
+  {id:'scatter',n:'Scatter',i:'🔵',c:'basic',lib:'plt.scatter'},
+  {id:'bar',n:'Bar Chart',i:'📊',c:'basic',lib:'plt.bar'},
+  {id:'barh',n:'Horiz. Bar',i:'📊',c:'basic',lib:'plt.barh'},
+  {id:'histogram',n:'Histogram',i:'📶',c:'basic',lib:'plt.hist'},
+  {id:'step',n:'Step',i:'📐',c:'basic',lib:'plt.step'},
+  {id:'stem',n:'Stem',i:'🌱',c:'basic',lib:'plt.stem'},
+  {id:'area',n:'Area/Fill',i:'🏔️',c:'basic',lib:'fill_between'},
+  {id:'errorbar',n:'Error Bar',i:'📏',c:'basic',lib:'plt.errorbar'},
+  // Statistical
+  {id:'kde',n:'KDE',i:'🌊',c:'stat',lib:'sns.kdeplot'},
+  {id:'ecdf',n:'ECDF',i:'📈',c:'stat',lib:'sns.ecdf'},
+  {id:'rug',n:'Rug',i:'┅',c:'stat',lib:'sns.rug'},
+  {id:'box',n:'Box',i:'📦',c:'stat',lib:'sns.boxplot'},
+  {id:'violin',n:'Violin',i:'🎻',c:'stat',lib:'sns.violin'},
+  {id:'strip',n:'Strip',i:'⋮',c:'stat',lib:'sns.strip'},
+  {id:'swarm',n:'Swarm',i:'🐝',c:'stat',lib:'sns.swarm'},
+  {id:'point',n:'Point',i:'🎯',c:'stat',lib:'sns.point'},
+  {id:'count',n:'Count',i:'🔢',c:'stat',lib:'sns.count'},
+  // Multivariate
+  {id:'heatmap',n:'Heatmap',i:'🗺️',c:'multi',lib:'sns.heatmap'},
+  {id:'correlation',n:'Corr. Matrix',i:'🔗',c:'multi',lib:'corr'},
+  {id:'pairplot',n:'Pair Plot',i:'🔄',c:'multi',lib:'sns.pair'},
+  {id:'parallel',n:'Parallel Coord',i:'///',c:'multi',lib:'plotly'},
+  {id:'radar',n:'Radar',i:'🕸️',c:'multi',lib:'plotly'},
+  // 3D
+  {id:'scatter3d',n:'3D Scatter',i:'🌐',c:'3d',lib:'mpl_3d'},
+  {id:'line3d',n:'3D Line',i:'〰️',c:'3d',lib:'mpl_3d'},
+  {id:'surface3d',n:'3D Surface',i:'🏔️',c:'3d',lib:'mpl_3d'},
+  {id:'contour',n:'Contour',i:'🌀',c:'3d',lib:'plt.contour'},
+  {id:'wireframe3d',n:'Wireframe',i:'🧊',c:'3d',lib:'mpl_3d'},
+  // Time series
+  {id:'timeseries',n:'Time Series',i:'📅',c:'ts',lib:'plt.plot'},
+  {id:'lag',n:'Lag Plot',i:'⏰',c:'ts',lib:'lag'},
+  {id:'acf',n:'ACF',i:'🔁',c:'ts',lib:'acf'},
+  {id:'rolling',n:'Rolling Stats',i:'📈',c:'ts',lib:'rolling'},
+  // Composition
+  {id:'pie',n:'Pie',i:'🥧',c:'comp',lib:'plt.pie'},
+  {id:'donut',n:'Donut',i:'🍩',c:'comp',lib:'plt.pie'},
+  {id:'stackedbar',n:'Stacked Bar',i:'📊',c:'comp',lib:'plt.bar'},
+  {id:'stackedarea',n:'Stacked Area',i:'🏔️',c:'comp',lib:'stackplot'},
+  {id:'treemap',n:'Treemap',i:'🌳',c:'comp',lib:'plotly'},
+  {id:'sunburst',n:'Sunburst',i:'☀️',c:'comp',lib:'plotly'},
+  {id:'waffle',n:'Waffle',i:'🧇',c:'comp',lib:'custom'},
+  // Specialized
+  {id:'sankey',n:'Sankey',i:'🔀',c:'spec',lib:'plotly'},
+  {id:'funnel',n:'Funnel',i:'🔻',c:'spec',lib:'plotly'},
+  {id:'waterfall',n:'Waterfall',i:'🌊',c:'spec',lib:'plotly'},
+  {id:'gantt',n:'Gantt',i:'📋',c:'spec',lib:'plotly'},
+  {id:'candlestick',n:'Candlestick',i:'📈',c:'spec',lib:'plotly'},
+  {id:'choropleth',n:'Choropleth',i:'🌍',c:'spec',lib:'plotly'},
+  {id:'bubblemap',n:'Bubble Map',i:'🗺️',c:'spec',lib:'plotly'},
+];
+
+function buildPlotTypeGrid() {
+  const grid = document.getElementById('plotTypeGrid');
+  grid.innerHTML = PLOT_TYPES.map(pt =>
+    `<div class="plot-type-card" data-id="${pt.id}" data-cat="${pt.c}" onclick="selectPlotType('${pt.id}')" style="padding:8px;border:1px solid var(--border1);border-radius:var(--r-sm);cursor:pointer;text-align:center;transition:all var(--tf);background:var(--bg-card)">
+      <div style="font-size:19px;margin-bottom:3px">${pt.i}</div>
+      <div style="font-size:10px;font-weight:600">${pt.n}</div>
+      <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--mono)">${pt.lib}</div>
+    </div>`
+  ).join('');
+}
+
+function filterPTypes(cat) {
+  document.querySelectorAll('.plot-type-card').forEach(el => {
+    el.style.display = (cat === 'all' || el.dataset.cat === cat) ? '' : 'none';
+  });
+}
+
+function selectPlotType(id) {
+  APP.plotType = id;
+  document.querySelectorAll('.plot-type-card').forEach(c => {
+    const sel = c.dataset.id === id;
+    c.style.borderColor = sel ? 'var(--accent)' : 'var(--border1)';
+    c.style.background = sel ? 'rgba(99,102,241,.1)' : 'var(--bg-card)';
+  });
+  const pt = PLOT_TYPES.find(p => p.id === id);
+  document.getElementById('selPlotBadge').textContent = pt?.n || id;
+  renderVizLayers();
+  schedulePreview();
+}
+
+// ============================================================
+// VIZ LAYER MANAGER
+// ============================================================
+function addVizLayer() {
+  const id = ++VIZ_LID;
+  const colors = getPal();
+  // Deep copy APP.data so layer edits don't mutate the source
+  const layerData = APP.data ? APP.data.map(r => ({...r})) : [];
+
+  const pt = APP.plotType || 'scatter';
+  const is1DX = ['histogram','count'].includes(pt);
+  const is1DY = ['kde','ecdf','rug'].includes(pt);
+
+  VIZ_LAYERS.push({
+    id, label:`Dataset ${id}`,
+    data: layerData,
+    colX: is1DY ? null : (APP.columns[0] || null),
+    colY: is1DX ? null : (APP.numCols[0] || APP.columns[1] || null),
+    colZ: APP.numCols[1] || null,
+    colColor: null, colSize: null,
+    color: colors[(id-1) % colors.length],
+    lineStyle:'solid', marker:'circle', visible:true
+  });
+  renderVizLayers();
+  if (!layerData.length) notify(`Layer ${id} added — load a file for this layer or upload data first`, 'info');
+}
+
+function removeVizLayer(id) { VIZ_LAYERS.splice(VIZ_LAYERS.findIndex(l=>l.id===id),1); renderVizLayers(); }
+function toggleVizLayer(id) { const l=VIZ_LAYERS.find(l=>l.id===id); if(l){l.visible=!l.visible;renderVizLayers();} }
+
+function renderVizLayers() {
+  const c = document.getElementById('vizLayerList');
+  if (!VIZ_LAYERS.length) {
+    c.innerHTML = `<div style="text-align:center;padding:14px;color:var(--text-tertiary);font-size:12px">
+      <p>No layers yet.</p>
+      <p style="margin-top:4px">Click <strong>+ Layer</strong> to add one.<br>If you already loaded data in the Data tab it will auto-populate.</p>
+    </div>`;
+    return;
+  }
+  
+  const pt = APP.plotType || 'scatter';
+  const is1D_X = ['histogram', 'count'].includes(pt);
+  const is1D_Y = ['kde', 'ecdf', 'rug'].includes(pt);
+  const isMatrix = ['correlation', 'pairplot', 'parallel', 'radar'].includes(pt);
+  const is3D = ['scatter3d', 'line3d', 'surface3d', 'wireframe3d', 'contour', 'bubblemap', 'treemap', 'sunburst', 'sankey', 'gantt', 'heatmap'].includes(pt);
+  const isCandle = pt === 'candlestick';
+
+  c.innerHTML = VIZ_LAYERS.map(layer => {
+    const cols = Object.keys(layer.data?.[0] || {});
+    const numCols = cols.filter(col => layer.data && isNumericCol(layer.data, col));
+    const noData = !cols.length;
+    const opt = (arr, sel) => arr.map(col => `<option value="${esc(col).replace(/"/g, '&quot;')}" ${col===sel?'selected':''}>${esc(col)}</option>`).join('');
+    
+    // Build dynamic field HTML
+    let dynamicFields = '';
+    if (noData) {
+      dynamicFields = `<div style="font-size:11px;color:var(--warning);padding:6px 8px;background:rgba(245,158,11,.1);border-radius:4px;margin-bottom:6px">⚠ No data yet — load a file.</div>`;
+    } else if (isCandle) {
+        dynamicFields = `
+        <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:4px">Select chronological columns (Date, Open, High, Low, Close)</div>
+        <div class="cc2">
+          <div><label class="fl" style="font-size:10px">Date / Time</label><select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="colX">${opt(cols, layer.colX)}</select></div>
+          <div></div>
+        </div>`;
+    } else if (isMatrix) {
+        dynamicFields = `<div style="font-size:11px;color:var(--info);padding:6px 8px;background:rgba(59,130,246,.1);border-radius:4px;margin-bottom:6px">ℹ️ This plot type automatically analyzes all numeric columns. No manual axis selection required.</div>`;
+    } else if (is1D_X) {
+        dynamicFields = `
+        <div class="cc2">
+          <div><label class="fl" style="font-size:10px">Value Column (X)</label><select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="colX">${opt(cols, layer.colX)}</select></div>
+          ${pt === 'histogram' ? `<div><label class="fl" style="font-size:10px">Bins</label><input type="number" class="fi layer-input" value="${esc(layer.bins||30).replace(/"/g, '&quot;')}" data-lid="${layer.id}" data-field="bins"></div>` : '<div></div>'}
+        </div>`;
+    } else if (is1D_Y) {
+        dynamicFields = `
+        <div class="cc2">
+          <div><label class="fl" style="font-size:10px">Value Column (Y)</label><select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="colY">${opt(cols, layer.colY)}</select></div>
+          <div></div>
+        </div>`;
+    } else {
+        // Standard 2D and 3D
+        dynamicFields = `
+        <div class="cc2">
+          <div><label class="fl" style="font-size:10px">${pt==='pie'||pt==='donut'?'Labels (X)':'X Axis'}</label>
+            <select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="colX">${opt(cols, layer.colX)}</select></div>
+          <div><label class="fl" style="font-size:10px">${pt==='pie'||pt==='donut'?'Values (Y)':'Y Axis'}</label>
+            <select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="colY">${opt(cols, layer.colY)}</select></div>
+        </div>
+        <div class="cc2" style="margin-top:5px">
+          ${is3D ? `<div><label class="fl" style="font-size:10px">Z Axis / Metric</label><select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="colZ">
+            <option value="">(none)</option>${opt(numCols, layer.colZ)}</select></div>` : `
+          <div><label class="fl" style="font-size:10px">Color split (opt.)</label><select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="colColor">
+            <option value="">(none)</option>${opt(cols, layer.colColor)}</select></div>
+          `}
+          <div><label class="fl" style="font-size:10px">Bubble Size (opt.)</label><select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="colSize">
+            <option value="">(none)</option>${opt(numCols, layer.colSize)}</select></div>
+        </div>`;
+    }
+
+    return `<div class="layer-card" style="border-left:3px solid ${esc(layer.color).replace(/"/g, '&quot;')}">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+        <div class="layer-dot" style="background:${esc(layer.color).replace(/"/g, '&quot;')}"></div>
+        <input class="fi layer-input" style="flex:1;font-size:12px;font-weight:600" value="${esc(layer.label).replace(/"/g, '&quot;')}" data-lid="${layer.id}" data-field="label">
+        <button class="btn btn-sm btn-ghost" style="padding:2px 6px" onclick="toggleVizLayer(${layer.id})" title="Toggle visibility">${layer.visible?'👁':'🙈'}</button>
+        <button class="btn btn-sm btn-ghost" style="padding:2px 6px;color:var(--error)" onclick="removeVizLayer(${layer.id})" title="Remove">✕</button>
+      </div>
+      <div style="margin-bottom:7px">
+        <label class="fl" style="font-size:10px">Load file for this layer (any format)</label>
+        <input type="file" accept=".csv,.tsv,.json,.dat,.txt" style="font-size:11px;width:100%;color:var(--text-secondary)" onchange="loadVizLayerFile(${layer.id},this)">
+      </div>
+      
+      ${dynamicFields}
+
+      <div class="cc2" style="margin-top:5px">
+        <div><label class="fl" style="font-size:10px">Colour</label>
+          <div style="display:flex;gap:4px">
+            <input type="color" value="${esc(layer.color).startsWith('#')?esc(layer.color):'#6366f1'}" style="width:34px;height:28px;border:none;border-radius:4px;cursor:pointer" class="layer-input" data-lid="${layer.id}" data-field="color" oninput="this.nextElementSibling.value=this.value">
+            <input class="fi layer-input" value="${esc(layer.color).replace(/"/g, '&quot;')}" style="font-size:11px" data-lid="${layer.id}" data-field="color">
+          </div>
+        </div>
+        <div><label class="fl" style="font-size:10px">Line Style</label>
+          <select class="fs layer-input" style="font-size:12px" data-lid="${layer.id}" data-field="lineStyle">
+            ${[['solid','Solid'],['dash','Dashed'],['dot','Dotted'],['dashdot','Dash-dot']].map(([v,l])=>`<option value="${v}" ${layer.lineStyle===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">${layer.data?.length||0} rows ${layer.data?.length>0?'<span style="color:var(--success)">✓</span>':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function loadVizLayerFile(id, input) {
+  const file = input.files[0]; if (!file) return;
+  parseAnyFile(file, result => {
+    const layer = VIZ_LAYERS.find(l => l.id === id);
+    if (!layer) return;
+    layer.data = result.data;
+    const cols = Object.keys(result.data[0]||{});
+    layer.colX = cols[0]||null;
+    layer.colY = cols.find(c => isNumericCol(result.data, c)) || cols[1] || null;
+    renderVizLayers();
+    notify(`Layer ${id}: ${result.data.length} rows loaded`, 'success');
+  });
+}
+
+// ============================================================
+// REFERENCE LINES
+// ============================================================
+let _rl_ctx = 'viz';
+
+function openAddRefLine(axis, ctx='viz') {
+  _rl_ctx = ctx;
+  document.getElementById('rl_axis').value = axis;
+  document.getElementById('rl_ctx').value = ctx;
+  document.getElementById('rlModalTitle').textContent = (axis==='h'?'Add Horizontal (y = c)':'Add Vertical (x = c)') + ' Line';
+  document.getElementById('rlValLabel').textContent = axis==='h' ? 'y value (data coords)' : 'x value (data coords)';
+  document.getElementById('rl_val').value = '';
+  document.getElementById('rl_label').value = '';
+  document.getElementById('refLineModal').classList.add('active');
+}
+
+function closeRefLineModal() { document.getElementById('refLineModal').classList.remove('active'); }
+
+function confirmAddRefLine() {
+  const val = document.getElementById('rl_val').value;
+  const axis = document.getElementById('rl_axis').value;
+  const ctx = document.getElementById('rl_ctx').value;
+  if (!val) { notify('Enter a value', 'error'); return; }
+  const entry = {
+    val: parseFloat(val) || val, axis,
+    label: document.getElementById('rl_label').value,
+    color: document.getElementById('rl_color').value,
+    style: document.getElementById('rl_style').value,
+    width: parseFloat(document.getElementById('rl_width').value)||2,
+    id: Date.now()
+  };
+  if (ctx === 'sci') { SCI_HLINES.push(entry); renderSciRefLines(); }
+  else { REF_LINES.push(entry); renderRefLines(); }
+  closeRefLineModal();
+  notify('Reference line added', 'success');
+}
+
+function renderRefLines() {
+  const c = document.getElementById('refLineList');
+  if (!c) return;
+  c.innerHTML = REF_LINES.length ? REF_LINES.map(rl =>
+    `<div class="rl-item" style="border-left-color:${rl.color}">
+      <div style="width:28px;height:12px;border-top:2px ${rl.style==='dot'?'dotted':rl.style==='dash'?'dashed':rl.style==='dashdot'?'dashed':'solid'} ${rl.color}"></div>
+      <span style="font-size:12px;flex:1;font-family:var(--mono)">${rl.axis==='h'?'y':'x'}=${rl.val} ${rl.label?'· '+rl.label:''}</span>
+      <button style="background:none;border:none;cursor:pointer;color:var(--error);font-size:13px" onclick="REF_LINES.splice(REF_LINES.findIndex(r=>r.id===${rl.id}),1);renderRefLines()">✕</button>
+    </div>`).join('') : '<p style="color:var(--text-tertiary);font-size:12px">No reference lines.</p>';
+}
+
+function renderSciRefLines() {
+  const c = document.getElementById('sciRefLineList');
+  if (!c) return;
+  c.innerHTML = SCI_HLINES.length ? SCI_HLINES.map(rl =>
+    `<div class="rl-item" style="border-left-color:${rl.color}">
+      <div style="width:28px;height:12px;border-top:2px ${rl.style==='dot'?'dotted':rl.style==='dash'?'dashed':'solid'} ${rl.color}"></div>
+      <span style="font-size:12px;flex:1;font-family:var(--mono)">${rl.axis==='h'?'y':'x'}=${rl.val} ${rl.label?'· '+rl.label:''}</span>
+      <button style="background:none;border:none;cursor:pointer;color:var(--error);font-size:13px" onclick="SCI_HLINES.splice(SCI_HLINES.findIndex(r=>r.id===${rl.id}),1);renderSciRefLines()">✕</button>
+    </div>`).join('') : '<p style="color:var(--text-tertiary);font-size:12px">No reference lines.</p>';
+}
+
+// Build reference line Plotly traces
+function buildRefLineTraces(lines, xRange, yRange) {
+  return lines.map(rl => {
+    const dash = rl.style === 'dot' ? 'dot' : rl.style === 'dash' ? 'dash' : rl.style === 'dashdot' ? 'dashdot' : 'solid';
+    if (rl.axis === 'h') {
+      return { x: xRange, y: [rl.val, rl.val], type:'scatter', mode:'lines', line:{color:rl.color,width:rl.width,dash}, name:rl.label||`y=${rl.val}`, showlegend:!!rl.label, hoverinfo:'skip' };
+    } else {
+      return { x: [rl.val, rl.val], y: yRange, type:'scatter', mode:'lines', line:{color:rl.color,width:rl.width,dash}, name:rl.label||`x=${rl.val}`, showlegend:!!rl.label, hoverinfo:'skip' };
+    }
+  });
+}
+
+// ============================================================
+// AXIS SCALE HELPER
+// ============================================================
+function scaleToPlotly(s) { return s === 'log' || s === 'log2' ? 'log' : '-'; }
+function scaleTransform(v, s) { if (s==='log') return Math.log10(Math.abs(v)); if (s==='log2') return Math.log2(Math.abs(v)); return v; }
+
+// ============================================================
+// PLOTLY LAYOUT HELPER
+// ============================================================
+function getLayout(extra={}) {
+  const pub = document.getElementById('plotPubMode')?.checked;
+  const sz = parseInt(document.getElementById('plotFont')?.value||'12');
+  const showGrid = document.getElementById('plotGrid')?.checked;
+  const showLegend = document.getElementById('plotLegend')?.checked;
+  const mirror = document.getElementById('plotMirror')?.checked;
+  const w = parseInt(document.getElementById('plotW')?.value||'800');
+  const h = parseInt(document.getElementById('plotH')?.value||'550');
+  const isDark = !document.documentElement.hasAttribute('data-theme') || document.documentElement.getAttribute('data-theme') === 'midnight';
+  const bg = pub ? '#ffffff' : (isDark ? '#1e293b' : '#ffffff');
+  const tc = pub ? '#1a1a1a' : (isDark ? '#e2e8f0' : '#1a1a1a');
+  const gc = pub ? 'rgba(0,0,0,0.12)' : (isDark ? '#334155' : '#e0e0e0');
+  const lc = pub ? '#333333' : (isDark ? '#475569' : '#666666');
+  const ff = pub ? "'Helvetica Neue', Arial, sans-serif" : "'Inter', sans-serif";
+
+  const xMin = parseFloat(document.getElementById('pXmin')?.value); const xMax = parseFloat(document.getElementById('pXmax')?.value);
+  const yMin = parseFloat(document.getElementById('pYmin')?.value); const yMax = parseFloat(document.getElementById('pYmax')?.value);
+  const xs = document.getElementById('plotXScale')?.value||'linear';
+  const ys = document.getElementById('plotYScale')?.value||'linear';
+
+  const axBase = { showgrid:showGrid, gridcolor:gc, gridwidth:1, linecolor:lc, linewidth:pub?1.5:1, ticks:'outside', tickfont:{family:ff,size:sz-1,color:tc}, title:{font:{family:ff,size:sz+1,color:tc}}, mirror, zeroline:false, showline:true };
+
+  return Object.assign({
+    title: { text: document.getElementById('plotTitle')?.value||'', font:{family:ff,size:sz+4,color:tc} },
+    font: { family:ff, size:sz, color:tc },
+    paper_bgcolor:bg, plot_bgcolor:bg, width:w, height:h,
+    margin: pub ? {l:70,r:30,t:50,b:65} : {l:60,r:25,t:50,b:55},
+    showlegend: showLegend, legend:{font:{size:sz-1},bgcolor:'rgba(0,0,0,0)',borderwidth:0},
+    xaxis: { ...axBase, title:{text:document.getElementById('plotXLabel')?.value||'',font:{family:ff,size:sz+1,color:tc}}, type:scaleToPlotly(xs), range:(!isNaN(xMin)&&!isNaN(xMax)?[xMin,xMax]:undefined) },
+    yaxis: { ...axBase, title:{text:document.getElementById('plotYLabel')?.value||'',font:{family:ff,size:sz+1,color:tc}}, type:scaleToPlotly(ys), range:(!isNaN(yMin)&&!isNaN(yMax)?[yMin,yMax]:undefined) }
+  }, extra);
+}
+
+// ============================================================
+// VIZ PLOT RENDERER
+// ============================================================
+function getDataRange(traces, axis) {
+  const vals = traces.flatMap(t => t[axis] ?? []).filter(v => v != null && isFinite(v));
+  if (!vals.length) return [0, 1];
+  let mn = Math.min(...vals), mx = Math.max(...vals);
+  const pad = ((mx - mn) * 0.1) || (mx * 0.1) || 1;
+  return [mn - pad, mx + pad];
+}
+
+function schedulePreview() {
+  const autoCheckbox = document.getElementById('plotAutoRender');
+  if (autoCheckbox && !autoCheckbox.checked) return;
+  clearTimeout(APP._previewTimer);
+  APP._previewTimer = setTimeout(renderVizPlot, 400);
+}
+
+function renderVizPlot() {
+  if (!VIZ_LAYERS.some(l => l.visible && l.data?.length)) {
+    document.getElementById('vizPlaceholder').style.display='flex';
+    document.getElementById('vizPlot').style.display='none';
+    return;
+  }
+  document.getElementById('vizPlaceholder').style.display='none';
+  document.getElementById('vizPlot').style.display='block';
+  const traces = [];
+
+  VIZ_LAYERS.filter(l=>l.visible&&l.data?.length).forEach(layer => {
+    const layerTraces = buildLayerTraces(layer, APP.plotType);
+    traces.push(...layerTraces);
+  });
+
+  // Calculate strict data domains for horizontal/vertical reference coordinates
+  const calculatedXRange = getDataRange(traces, 'x');
+  const calculatedYRange = getDataRange(traces, 'y');
+  traces.push(...buildRefLineTraces(REF_LINES, calculatedXRange, calculatedYRange));
+
+  const layout = getLayout();
+  const is3D = ['scatter3d','line3d','surface3d','wireframe3d','bar3d'].includes(APP.plotType);
+  if (is3D) { const isDark = !document.documentElement.hasAttribute('data-theme')||document.documentElement.getAttribute('data-theme')==='midnight'; layout.scene = { xaxis:{gridcolor:isDark?'#334155':'#e0e0e0'}, yaxis:{gridcolor:isDark?'#334155':'#e0e0e0'}, zaxis:{gridcolor:isDark?'#334155':'#e0e0e0'} }; }
+
+  const config = { responsive:true, displayModeBar:true, modeBarButtonsToRemove:['lasso2d'], toImageButtonOptions:{format:'svg',filename:'vizdash_plot',scale:parseInt(document.getElementById('plotScale')?.value||'3')} };
+  Plotly.react('vizPlot', traces, layout, config);
+  
+  if (window.MathJax?.typesetPromise) {
+    MathJax.typesetPromise([document.getElementById('vizPlot')]);
+  }
+
+  APP._lastVizTraces = traces; APP._lastVizLayout = layout;
+}
+
+// ============================================================
+// LAYER TRACE BUILDER — all 50+ plot types
+// ============================================================
+function buildLayerTraces(layer, plotType) {
+  const data = layer.data || [];
+  if (!data.length) return [];
+  const color = layer.color;
+  const lw = parseFloat(document.getElementById('plotLW')?.value||'2');
+  const ms = parseFloat(document.getElementById('plotMS')?.value||'7');
+  const marker = document.getElementById('plotMarker')?.value||'circle';
+  const ls = layer.lineStyle || document.getElementById('plotLineStyle')?.value||'solid';
+  const dash = ls==='solid'?'solid':ls==='dash'?'dash':ls==='dot'?'dot':'dashdot';
+  const label = layer.label || 'Data';
+  const x = layer.colX, y = layer.colY, z = layer.colZ;
+  const colorCol = layer.colColor, sizeCol = layer.colSize;
+  const markerSym = marker === 'none' ? 'circle' : marker;
+
+  const getX = r => r[x]; const getY = r => r[y]; const getZ = r => r[z];
+  const xVals = data.map(getX); const yVals = data.map(getY);
+  const pal = getPal();
+
+  const mkTrace = (mode, extra={}) => ({
+    x: xVals, y: yVals, type:'scatter', mode, name:label,
+    line:{color,width:lw,dash},
+    marker:{color,size:ms,symbol:markerSym,opacity:.8,line:{width:.5,color:'rgba(0,0,0,.15)'}},
+    ...extra
+  });
+
+  switch (plotType) {
+    case 'line': return [mkTrace('lines+markers',{mode:marker==='none'?'lines':'lines+markers'})];
+    case 'scatter': {
+      const sz = sizeCol?data.map(r=>Math.max(3,Math.min(35,parseFloat(r[sizeCol])||ms))):ms;
+      const clr = colorCol?data.map(r=>r[colorCol]):color;
+      return [mkTrace('markers',{marker:{color:clr,size:sz,colorscale:'Viridis',showscale:!!colorCol,line:{width:.5,color:'rgba(0,0,0,.1)'}},hovertemplate:`<b>${label}</b><br>${x}: %{x:.4g}<br>${y}: %{y:.4g}<extra></extra>`})];
+    }
+    case 'bar': return [{x:xVals,y:yVals,type:'bar',name:label,marker:{color,line:{width:1,color:'rgba(0,0,0,.1)'}}}];
+    case 'barh': return [{x:yVals,y:xVals,type:'bar',orientation:'h',name:label,marker:{color,line:{width:1,color:'rgba(0,0,0,.1)'}}}];
+    case 'histogram': {
+      const bins = parseInt(layer.bins) || 30;
+      return [{x:xVals,type:'histogram',nbinsx:bins,name:label,marker:{color,line:{width:1,color:'rgba(0,0,0,.15)'}},opacity:.75}];
+    }
+    case 'step': return [{x:xVals,y:yVals,type:'scatter',mode:'lines',line:{color,width:lw,dash,shape:'hv'},name:label}];
+    case 'stem': {
+      const lx=[], ly=[];
+      xVals.forEach((xv,i)=>{ lx.push(xv,xv,null); ly.push(0,yVals[i],null); });
+      return [
+        {x:lx, y:ly, type:'scatter', mode:'lines',line:{color,width:1.5}, showlegend:false, hoverinfo:'skip'},
+        {x:xVals, y:yVals, type:'scatter', mode:'markers',marker:{color,size:ms+1},name:label}
+      ];
+    }
+    case 'area': return [{x:xVals,y:yVals,type:'scatter',mode:'lines',fill:'tozeroy',line:{color,width:lw},fillcolor:color+'30',name:label}];
+    case 'errorbar': {
+      const errVals = z ? data.map(r=>Math.abs(parseFloat(r[z])||0)) : null;
+      const t={x:xVals,y:yVals,type:'scatter',mode:'markers',marker:{color,size:ms},name:label};
+      if (errVals) t.error_y={type:'data',array:errVals,visible:true,color};
+      return [t];
+    }
+    case 'kde': {
+      const validY = yVals.map(Number).filter(v=>!isNaN(v));
+      const bw=1.06*stdDev(validY)*Math.pow(validY.length,-0.2);
+      const mn=Math.min(...validY)-3*bw,mx=Math.max(...validY)+3*bw;
+      const kx=Array.from({length:200},(_,i)=>mn+i*(mx-mn)/199);
+      const ky=kx.map(xv=>validY.reduce((s,d)=>s+Math.exp(-.5*((xv-d)/bw)**2),0)/(validY.length*bw*Math.sqrt(2*Math.PI)));
+      return [{x:kx,y:ky,type:'scatter',mode:'lines',fill:'tozeroy',line:{color,width:lw},fillcolor:color+'25',name:label}];
+    }
+    case 'ecdf': {
+      const sorted=[...yVals.map(Number).filter(v=>!isNaN(v))].sort((a,b)=>a-b);
+      return [{x:sorted,y:sorted.map((_,i)=>(i+1)/sorted.length),type:'scatter',mode:'lines',line:{color,width:lw,shape:'hv'},name:label}];
+    }
+    case 'rug': return [{x:yVals,y:yVals.map(()=>0),type:'scatter',mode:'markers',marker:{symbol:'line-ns',size:16,color,line:{width:1}},name:label}];
+    case 'box': return [{x:colorCol?xVals:undefined,y:yVals,type:'box',name:label,marker:{color},boxpoints:'outliers'}];
+    case 'violin': return [{x:colorCol?xVals:undefined,y:yVals,type:'violin',name:label,box:{visible:true},meanline:{visible:true},line:{color},fillcolor:color+'50'}];
+    case 'strip': return [{x:xVals,y:yVals,type:'scatter',mode:'markers',marker:{color,size:5,opacity:.6},name:label}];
+    case 'swarm': {
+      const jx=xVals.map(xv=>{const g=new Set([...xVals]).size>1?typeof xv==='string'?[...new Set(xVals)].indexOf(xv):xv:0;return g+(Math.random()-.5)*.3;});
+      return [{x:jx,y:yVals,type:'scatter',mode:'markers',marker:{color,size:5,opacity:.7},text:xVals,name:label}];
+    }
+    case 'point': {
+      const groups=[...new Set(xVals)];
+      const means=groups.map(g=>{const v=data.filter(r=>r[x]===g).map(r=>parseFloat(r[y])).filter(v=>!isNaN(v));return{g,m:meanArr(v),s:stdDev(v)/Math.sqrt(v.length)};});
+      return [{x:means.map(m=>m.g),y:means.map(m=>m.m),error_y:{type:'data',array:means.map(m=>m.s*1.96),visible:true,color},type:'scatter',mode:'markers',marker:{color,size:ms+2},name:label}];
+    }
+    case 'count': {
+      const cnt={};xVals.forEach(v=>{cnt[v]=(cnt[v]||0)+1;});
+      return [{x:Object.keys(cnt),y:Object.values(cnt),type:'bar',name:label,marker:{color:Object.keys(cnt).map((_,i)=>pal[i%pal.length]),line:{width:1,color:'rgba(0,0,0,.1)'}}}];
+    }
+    case 'heatmap': case 'correlation': {
+      const nc=Object.keys(data[0]||{}).filter(c=>isNumericCol(data, c));
+      const z2=nc.map(c1=>nc.map(c2=>{const v1=data.map(r=>r[c1]),v2=data.map(r=>r[c2]);return corrCoef(v1,v2);}));
+      return [{z:z2,x:nc,y:nc,type:'heatmap',colorscale:'RdBu',zmid:0,text:z2.map(row=>row.map(v=>v.toFixed(3))),texttemplate:'%{text}'}];
+    }
+    case 'pairplot': {
+      const nc=Object.keys(data[0]||{}).filter(c=>isNumericCol(data, c)).slice(0,5);
+      const n=nc.length; const traces=[]; const sizeEach=(1-.02*(n-1))/n;
+      nc.forEach((c1,i)=>nc.forEach((c2,j)=>{
+        const xi=(i>0||j>0)?`x${i*n+j+1}`:'x',yi=(i>0||j>0)?`y${i*n+j+1}`:'y';
+        const xd=data.map(r=>r[c2]),yd=data.map(r=>r[c1]);
+        if (i===j) traces.push({x:xd,type:'histogram',nbinsx:15,xaxis:xi,yaxis:yi,marker:{color},showlegend:false});
+        else traces.push({x:xd,y:yd,type:'scatter',mode:'markers',marker:{color,size:3,opacity:.5},xaxis:xi,yaxis:yi,showlegend:false});
+      }));
+      return traces;
+    }
+    case 'parallel': {
+      const nc=Object.keys(data[0]||{}).filter(c=>isNumericCol(data, c));
+      const dims=nc.map(c=>({label:c,values:data.map(r=>r[c]||0)}));
+      return [{type:'parcoords',line:{color:colorCol?data.map(r=>r[colorCol]):color,colorscale:'Viridis'},dimensions:dims}];
+    }
+    case 'radar': {
+      const nc=Object.keys(data[0]||{}).filter(c=>isNumericCol(data, c)).slice(0,8);
+      const vals=nc.map(c=>meanArr(data.map(r=>r[c]||0)));
+      return [{type:'scatterpolar',r:[...vals,vals[0]],theta:[...nc,nc[0]],fill:'toself',line:{color},fillcolor:color+'30',name:label}];
+    }
+    case 'scatter3d': {
+      const zVals=z?data.map(getZ):new Array(data.length).fill(0);
+      return [{x:xVals,y:yVals,z:zVals,type:'scatter3d',mode:'markers',marker:{color,size:4,opacity:.8},name:label}];
+    }
+    case 'line3d': {
+      const zVals=z?data.map(getZ):new Array(data.length).fill(0);
+      return [{x:xVals,y:yVals,z:zVals,type:'scatter3d',mode:'lines',line:{color,width:lw+1},name:label}];
+    }
+    case 'surface3d': {
+      const xUniq=[...new Set(xVals)].sort((a,b)=>a-b),yUniq=[...new Set(yVals)].sort((a,b)=>a-b);
+      const zGrid = yUniq.map(yv => xUniq.map(xv => {
+        let bestDist = Infinity, bestZ = 0;
+        data.forEach(d => {
+          const dist = (d[x]-xv)**2 + (d[y]-yv)**2;
+          if (dist < bestDist) { bestDist=dist; bestZ=parseFloat(d[z])||0; }
+        });
+        return bestZ;
+      }));
+      return [{x:xUniq,y:yUniq,z:zGrid,type:'surface',colorscale:'Viridis'}];
+    }
+    case 'wireframe3d': {
+      const xUniq=[...new Set(xVals)].sort((a,b)=>a-b),yUniq=[...new Set(yVals)].sort((a,b)=>a-b);
+      const zGrid = yUniq.map(yv => xUniq.map(xv => {
+        let bestDist = Infinity, bestZ = 0;
+        data.forEach(d => {
+          const dist = (d[x]-xv)**2 + (d[y]-yv)**2;
+          if (dist < bestDist) { bestDist=dist; bestZ=parseFloat(d[z])||0; }
+        });
+        return bestZ;
+      }));
+      return [{x:xUniq,y:yUniq,z:zGrid,type:'surface',hidesurface:true,contours:{x:{show:true},y:{show:true},z:{show:true}},colorscale:'Viridis'}];
+    }
+    case 'contour': {
+      return [{x:xVals,y:yVals,z:z?data.map(getZ):yVals,type:'contour',colorscale:'Viridis',contours:{coloring:'heatmap'}}];
+    }
+    case 'timeseries': return [mkTrace(marker==='none'?'lines':'lines+markers')];
+    case 'lag': {
+      const n2=yVals.length;
+      return [{x:yVals.slice(0,n2-1),y:yVals.slice(1),type:'scatter',mode:'markers',marker:{color,size:5,opacity:.5},name:label+' Lag-1'}];
+    }
+    case 'acf': {
+      const vals=yVals.map(Number).filter(v=>!isNaN(v));const n3=vals.length;const m2=meanArr(vals);const denom=vals.reduce((s,v)=>s+(v-m2)**2,0);
+      const maxLag=Math.min(40,n3-1);const acf=Array.from({length:maxLag+1},(_,k)=>{let num=0;for(let i=0;i<n3-k;i++)num+=(vals[i]-m2)*(vals[i+k]-m2);return num/denom;});
+      const lags=Array.from({length:maxLag+1},(_,i)=>i);const ci2=1.96/Math.sqrt(n3);
+      const ot=[];
+      const lx2=[], ly2=[];
+      lags.forEach((l2,i)=>{ lx2.push(l2,l2,null); ly2.push(0,acf[i],null); });
+      ot.push({x:lx2, y:ly2, type:'scatter', mode:'lines', line:{color,width:1.8}, showlegend:false, hoverinfo:'skip'});
+      ot.push({x:lags,y:acf,type:'scatter',mode:'markers',marker:{color,size:6},name:label+' ACF'});
+      ot.push({x:[0,maxLag],y:[ci2,ci2],type:'scatter',mode:'lines',line:{dash:'dash',color:'red',width:1},name:'95% CI',legendgroup:'ci'});
+      ot.push({x:[0,maxLag],y:[-ci2,-ci2],type:'scatter',mode:'lines',line:{dash:'dash',color:'red',width:1},showlegend:false,legendgroup:'ci'});
+      return ot;
+    }
+    case 'rolling': {
+      const win=Math.max(5,Math.floor(yVals.length/20));
+      const rm=[],rs=[];
+      yVals.forEach((_,i)=>{const sl=yVals.slice(Math.max(0,i-win+1),i+1).map(Number).filter(v=>!isNaN(v));rm.push(meanArr(sl));rs.push(stdDev(sl));});
+      return [
+        {x:xVals,y:yVals.map(Number),type:'scatter',mode:'lines',line:{color:hexAlpha(color,.38),width:1},name:label+' Raw'},
+        {x:xVals,y:rm,type:'scatter',mode:'lines',line:{color,width:lw+.5},name:`${label} Rolling(${win})`},
+        {x:xVals,y:rm.map((m3,i)=>m3+2*rs[i]),type:'scatter',mode:'lines',line:{width:0},showlegend:false,hoverinfo:'skip'},
+        {x:xVals,y:rm.map((m3,i)=>m3-2*rs[i]),type:'scatter',mode:'lines',line:{width:0},fill:'tonexty',fillcolor:hexAlpha(color,.12),showlegend:false,hoverinfo:'skip'}
+      ];
+    }
+    case 'pie': case 'donut': {
+      const agg={};data.forEach(r=>{const k=String(r[x]??'(blank)');agg[k]=(agg[k]||0)+(parseFloat(r[y])||0);});
+      return [{labels:Object.keys(agg),values:Object.values(agg),type:'pie',hole:plotType==='donut'?.5:0,marker:{colors:pal},textfont:{size:12}}];
+    }
+    case 'stackedbar': {
+      const nc=Object.keys(data[0]||{}).filter(c=>c!==x && isNumericCol(data, c));
+      if(!nc.length) return [mkTrace('markers')];
+      return nc.map((c,i)=>({x:xVals,y:data.map(r=>parseFloat(r[c])||0),type:'bar',name:c,marker:{color:pal[i%pal.length]}}));
+    }
+    case 'stackedarea': {
+      const nc=Object.keys(data[0]||{}).filter(c=>c!==x && isNumericCol(data, c));
+      if(!nc.length) return [mkTrace('lines')];
+      return nc.map((c,i)=>({x:xVals,y:data.map(r=>parseFloat(r[c])||0),type:'scatter',mode:'lines',stackgroup:'one',name:c,line:{color:pal[i%pal.length]},fillcolor:hexAlpha(pal[i%pal.length],.38)}));
+    }
+    case 'treemap': {
+      const lbls=data.map(r=>String(r[x]??''));
+      const parents=z ? data.map(r=>{ const p=String(r[z]??''); return lbls.includes(p)?p:''; }) : data.map(()=>'');
+      return [{type:'treemap',labels:lbls,values:data.map(r=>parseFloat(r[y])||0),parents,branchvalues:'total'}];
+    }
+    case 'sunburst': {
+      const lbls=data.map(r=>String(r[x]??''));
+      const parents=z ? data.map(r=>{ const p=String(r[z]??''); return lbls.includes(p)?p:''; }) : data.map(()=>'');
+      return [{type:'sunburst',labels:lbls,values:data.map(r=>parseFloat(r[y])||0),parents,branchvalues:'total'}];
+    }
+    case 'waffle': {
+      const agg={};data.forEach(r=>{const k=String(r[x]??'?');agg[k]=(agg[k]||0)+(parseFloat(r[y])||0);});
+      const cats=Object.keys(agg);
+      if(!cats.length) return [mkTrace('markers')];
+      const total=Object.values(agg).reduce((a,b)=>a+b,0)||1;
+      const cells=100;let idx=0;const catMap={};
+      cats.forEach((c,i)=>{const n=Math.round(agg[c]/total*cells);for(let j=0;j<n&&idx<cells;j++,idx++)catMap[idx]=i;});
+      while(idx<cells) catMap[idx++]=cats.length-1;
+      const z2=[];for(let i=9;i>=0;i--){const row=[];for(let j=0;j<10;j++)row.push(catMap[i*10+j]??0);z2.push(row);}
+      const N=cats.length;
+      const cscale=cats.map((c,i)=>[[i/N,pal[i%pal.length]],[(i+1)/N,pal[i%pal.length]]]).flat();
+      const catLabels = Array.from({length:10}, (_,i) => Array.from({length:10}, (_,j) => cats[catMap[i*10+j] ?? 0] ?? ''));
+      return [{z:z2,type:'heatmap',showscale:false,zmin:0,zmax:N,colorscale:cscale, customdata:catLabels, hovertemplate:'<b>%{customdata}</b><extra></extra>'}];
+    }
+    case 'sankey': {
+      const labels=[...new Set([...data.map(r=>String(r[x]??'')),...data.map(r=>String(r[y]??''))])].filter(Boolean);
+      if(labels.length<2) return [mkTrace('markers')];
+      return [{type:'sankey',node:{label:labels,color:labels.map((_,i)=>pal[i%pal.length]+'cc'),pad:15,thickness:18},
+        link:{source:data.map(r=>labels.indexOf(String(r[x]??''))).filter(i=>i>=0),
+              target:data.map(r=>labels.indexOf(String(r[y]??''))).filter(i=>i>=0),
+              value:data.map(r=>Math.max(0.001,parseFloat(r[z])||1)),
+              color:data.map((_,i)=>pal[i%pal.length]+'40')}}];
+    }
+    case 'funnel': return [{type:'funnel',y:data.map(r=>String(r[x]??'')),x:data.map(r=>parseFloat(r[y])||0),marker:{color:data.map((_,i)=>pal[i%pal.length])},textinfo:'value+percent initial'}];
+    case 'waterfall': return [{type:'waterfall',x:xVals,y:yVals.map(Number),connector:{line:{color}},increasing:{marker:{color:'#10b981'}},decreasing:{marker:{color:'#ef4444'}}}];
+    case 'gantt': return data.map((r,i)=>({x:[r[x],r[y]],y:[String(r[z]??`Task${i+1}`),String(r[z]??`Task${i+1}`)],type:'scatter',mode:'lines',line:{color:pal[i%pal.length],width:18},name:String(r[z]??`Task${i+1}`),showlegend:false}));
+    case 'candlestick': {
+      const cols=Object.keys(data[0]||{});
+      if(cols.length<5){ notify('Candlestick needs 5 columns: date, open, high, low, close','error'); return [mkTrace('markers')]; }
+      const [dt,op,hi,lo,cl]=cols;
+      return [{type:'candlestick',x:data.map(r=>r[dt]),open:data.map(r=>parseFloat(r[op])),high:data.map(r=>parseFloat(r[hi])),low:data.map(r=>parseFloat(r[lo])),close:data.map(r=>parseFloat(r[cl])),increasing:{line:{color:'#10b981'}},decreasing:{line:{color:'#ef4444'}}}];
+    }
+    case 'choropleth': return [{type:'choropleth',locations:xVals.map(String),z:yVals.map(Number),locationmode:'country names',colorscale:'Viridis'}];
+    case 'bubblemap': {
+      const cols2=Object.keys(data[0]||{});
+      if(cols2.length<2){ notify('Bubble map needs at least lat, lon columns','error'); return [mkTrace('markers')]; }
+      return [{type:'scattergeo',lat:data.map(r=>parseFloat(r[x])),lon:data.map(r=>parseFloat(r[y])),mode:'markers',
+        marker:{size:z?data.map(r=>Math.max(4,Math.min(40,(parseFloat(r[z])||5)/2))):8,
+                color:color,opacity:.7,line:{width:.5,color:'#fff'}}}];
+    }
+    default: return [mkTrace('lines+markers')];
+  }
+}
+
+// hexAlpha: convert any hex colour + 0-1 alpha to rgba() so it works everywhere
+function hexAlpha(hex,a){
+  hex=(hex||'#888888').replace('#','');
+  if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  if(hex.length!==6) return `rgba(128,128,128,${a})`;
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ============================================================
+// DOWNLOAD VIZ PLOT
+// ============================================================
+function addCurrentToDash() {
+  if (!APP._lastVizTraces) { notify('Render a plot first', 'error'); return; }
+  addToDash(document.getElementById('plotTitle')?.value||'Plot', APP._lastVizTraces, APP._lastVizLayout);
+}
+
+function downloadViz(fmt) {
+  const el = document.getElementById('vizPlot');
+  if (!el?.data) { notify('Render first', 'error'); return; }
+  if (fmt === 'html') {
+    const html = `<!DOCTYPE html><html><head><script src="https://cdn.plot.ly/plotly-2.35.2.min.js"><\/script></head><body><div id="p"></div><script>Plotly.newPlot('p',${JSON.stringify(el.data)},${JSON.stringify(el.layout)},{responsive:true})<\/script></body></html>`;
+    dlStr(html, 'vizdash_plot.html', 'text/html');
+  } else {
+    Plotly.downloadImage(el, { format:fmt, scale:parseInt(document.getElementById('plotScale')?.value||'3'), filename:'vizdash_plot', width:parseInt(document.getElementById('plotW')?.value||'800'), height:parseInt(document.getElementById('plotH')?.value||'550') });
+  }
+}
+
+// ============================================================
+// SCI CONTOUR LAYER MANAGER
+// ============================================================
+function addSciLayer() {
+  const id = ++SCI_LID;
+  const pal2 = PAL.colorblind;
+  SCI_LAYERS.push({ id, label:`Dataset ${id}`, data:[], cols:[], colX:0, colY:1, colZ:2, color:pal2[(id-1)%pal2.length], lineStyle:'solid', fillMode:false, yFill:1e-10, visible:true, _raw:'' });
+  renderSciLayerList();
+}
+
+function removeSciLayer(id) { SCI_LAYERS.splice(SCI_LAYERS.findIndex(l=>l.id===id),1); renderSciLayerList(); }
+function toggleSciLayer(id) { const l=SCI_LAYERS.find(l=>l.id===id); if(l){l.visible=!l.visible;renderSciLayerList();} }
+
+function renderSciLayerList() {
+  const c = document.getElementById('sciLayerList');
+  if (!c) return;
+  if (!SCI_LAYERS.length) { c.innerHTML='<p style="color:var(--text-tertiary);font-size:12px;padding:6px">No layers. Click "+ Layer".</p>'; return; }
+  c.innerHTML = SCI_LAYERS.map(layer => `
+    <div class="layer-card" style="border-left:3px solid ${layer.color}">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+        <div class="layer-dot" style="background:${layer.color}"></div>
+        <input class="fi" style="flex:1;font-size:12px;font-weight:600" value="${layer.label}" onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).label=this.value">
+        <button class="btn btn-sm btn-ghost" style="padding:2px 6px" onclick="toggleSciLayer(${layer.id})">${layer.visible?'👁':'🙈'}</button>
+        <button class="btn btn-sm btn-ghost" style="padding:2px 6px;color:var(--error)" onclick="removeSciLayer(${layer.id})">✕</button>
+      </div>
+      <div style="margin-bottom:7px">
+        <label class="fl" style="font-size:10px">Load file (CSV/TSV/JSON/.dat/.txt)</label>
+        <input type="file" accept=".csv,.tsv,.json,.dat,.txt" style="font-size:11px" onchange="loadSciLayerFile(${layer.id},this)">
+      </div>
+      <div style="margin-bottom:7px">
+        <label class="fl" style="font-size:10px">Or paste data (space/tab separated x y z per row)</label>
+        <textarea class="fta" rows="3" style="font-size:11px;font-family:var(--mono);resize:vertical" placeholder="0.01  1e-14  8.5&#10;0.05  3e-13  9.2&#10;..." onchange="parseSciLayerText(${layer.id},this.value)">${layer._raw||''}</textarea>
+      </div>
+      <div class="cc3" style="margin-bottom:7px">
+        <div><label class="fl" style="font-size:10px">X col idx</label><input class="fi" type="number" value="${layer.colX}" min="0" style="font-size:12px" onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).colX=parseInt(this.value)"></div>
+        <div><label class="fl" style="font-size:10px">Y col idx</label><input class="fi" type="number" value="${layer.colY}" min="0" style="font-size:12px" onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).colY=parseInt(this.value)"></div>
+        <div><label class="fl" style="font-size:10px">Z col idx</label><input class="fi" type="number" value="${layer.colZ}" min="0" style="font-size:12px" onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).colZ=parseInt(this.value)"></div>
+      </div>
+      <div class="cc2" style="margin-bottom:6px">
+        <div><label class="fl" style="font-size:10px">Colour</label>
+          <div style="display:flex;gap:4px">
+            <input type="color" value="${layer.color.startsWith('#')?layer.color:'#0072b2'}" style="width:32px;height:28px;border:none;border-radius:4px;cursor:pointer" onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).color=this.value;renderSciLayerList()">
+            <input class="fi" value="${layer.color}" style="font-size:11px" onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).color=this.value">
+          </div>
+        </div>
+        <div><label class="fl" style="font-size:10px">Line Style</label>
+          <select class="fs" style="font-size:12px" onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).lineStyle=this.value">
+            ${[['solid','Solid'],['dash','Dashed (- -)'],['dot','Dotted (:)'],['dashdot','Dash-dot (-.)']].map(([v,l])=>`<option value="${v}" ${layer.lineStyle===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <label class="fchk" style="margin-bottom:5px">
+        <input type="checkbox" ${layer.fillMode?'checked':''} onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).fillMode=this.checked;renderSciLayerList()">
+        <span style="font-size:12px">Fill to y_fill (plot_contour_with_fill)</span>
+      </label>
+      ${layer.fillMode?`<div class="fg"><label class="fl" style="font-size:10px">y_fill value</label><input class="fi" value="${layer.yFill}" style="font-size:12px" placeholder="e.g. 2e-8" onchange="SCI_LAYERS.find(l=>l.id===${layer.id}).yFill=parseFloat(this.value)"></div>`:''}
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">${layer.data.length} data points ${layer.data.length>0?'<span style="color:var(--success)">✓</span>':''}</div>
+    </div>`).join('');
+}
+
+function loadSciLayerFile(id, input) {
+  const file = input.files[0]; if (!file) return;
+  parseAnyFile(file, result => {
+    const layer = SCI_LAYERS.find(l=>l.id===id); if (!layer) return;
+    // Convert to numeric matrix regardless of format
+    const cols = Object.keys(result.data[0]||{});
+    const matrix = result.data.map(r => cols.map(c => parseFloat(r[c])||0)).filter(row => row.every(v => !isNaN(v)));
+    layer.data = matrix;
+    layer.cols = cols;
+    renderSciLayerList();
+    notify(`Layer ${id}: ${matrix.length} rows from ${file.name}`, 'success');
+  });
+}
+
+function parseSciLayerText(id, text) {
+  const layer = SCI_LAYERS.find(l=>l.id===id); if (!layer) return;
+  layer._raw = text;
+  const rows = [];
+  text.trim().split('\n').forEach(line => {
+    line = line.trim(); if (!line || line.startsWith('#')) return;
+    const cols = line.split(/[\s,]+/).map(Number);
+    if (cols.length >= 2 && !cols.some(isNaN)) rows.push(cols);
+  });
+  layer.data = rows;
+  renderSciLayerList();
+  notify(`Layer ${id}: ${rows.length} rows parsed`, 'success');
+}
+
+// ============================================================
+// SCI CONTOUR ANNOTATIONS
+// ============================================================
+function sciAddAnnotation() {
+  const x=parseFloat(document.getElementById('ann_x').value);
+  const y=parseFloat(document.getElementById('ann_y').value);
+  const text=document.getElementById('ann_text').value;
+  if (isNaN(x)||isNaN(y)||!text) { notify('Fill x, y, and text','error'); return; }
+  SCI_ANNOTS.push({ x, y, text, color:document.getElementById('ann_color').value, size:parseFloat(document.getElementById('ann_size').value)||14, id:Date.now() });
+  renderSciAnnotList();
+}
+
+function renderSciAnnotList() {
+  const c=document.getElementById('sciAnnotList'); if(!c) return;
+  c.innerHTML = SCI_ANNOTS.length ? SCI_ANNOTS.map(a=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg-tertiary);border-radius:5px;margin-bottom:5px;font-size:12px"><span style="flex:1;font-family:var(--mono);color:${a.color}">(${a.x},${a.y}) "${a.text}"</span><button style="background:none;border:none;cursor:pointer;color:var(--error)" onclick="SCI_ANNOTS.splice(SCI_ANNOTS.findIndex(an=>an.id===${a.id}),1);renderSciAnnotList()">✕</button></div>`).join('') : '<p style="color:var(--text-tertiary);font-size:12px">No annotations.</p>';
+}
+
+// ============================================================
+// SCI CONTOUR ENGINE (griddata + marching squares)
+// ============================================================
+function sciIDWGrid(logX, logY, zVals, n) {
+  const xMin=Math.min(...logX),xMax=Math.max(...logX),yMin=Math.min(...logY),yMax=Math.max(...logY);
+  const rx=xMax-xMin||1, ry=yMax-yMin||1;
+  const xg=Array.from({length:n},(_,i)=>xMin+i*rx/(n-1));
+  const yg=Array.from({length:n},(_,i)=>yMin+i*ry/(n-1));
+  
+  // Normalize mapped values to [0,1] for distance weighting, otherwise huge axis disparities break radial distance
+  const nx=logX.map(v=>(v-xMin)/rx), ny=logY.map(v=>(v-yMin)/ry);
+  const nxg=xg.map(v=>(v-xMin)/rx), nyg=yg.map(v=>(v-yMin)/ry);
+
+  // Dynamic radius for Gaussian weighting based on data density.
+  // This physically mimics python's Delaunay local mesh so far-away zero-probability boundaries don't overpower local signals
+  let bw2 = 4.0 / nx.length; 
+  if(bw2 < 0.0001) bw2 = 0.0001;
+  if(bw2 > 0.05) bw2 = 0.05;
+
+  const zgrid=nyg.map(yv=>nxg.map(xv=>{
+    let wS=0,zS=0;
+    for(let k=0;k<nx.length;k++){
+      const dx=xv-nx[k], dy=yv-ny[k], d2=dx*dx+dy*dy;
+      if(d2 < 1e-10) return zVals[k];
+      
+      // Hybrid IDW-Gaussian: exact at the data point (1/d2), but drops to 0 globally
+      const w = Math.exp(-d2 / bw2) / d2;
+      if (w > 1e-8) { wS+=w; zS+=w*zVals[k]; }
+    }
+    return wS>0?zS/wS:NaN;
+  }));
+  return {xg,yg,zgrid};
+}
+
+function marchingSquares(xg, yg, zgrid, level) {
+  const segs=[];
+  function ip(a,b,fa,fb){return fa===fb?(a+b)/2:a+(b-a)*(level-fa)/(fb-fa);}
+  for(let j=0;j<yg.length-1;j++) for(let i=0;i<xg.length-1;i++){
+    const z00=zgrid[j][i],z10=zgrid[j][i+1],z01=zgrid[j+1][i],z11=zgrid[j+1][i+1];
+    if([z00,z10,z01,z11].some(isNaN)) continue;
+    const x0=xg[i],x1=xg[i+1],y0=yg[j],y1=yg[j+1];
+    const code=(z00>=level?1:0)|(z10>=level?2:0)|(z11>=level?4:0)|(z01>=level?8:0);
+    if(!code||code===15) continue;
+    const eB={x:ip(x0,x1,z00,z10),y:y0},eR={x:x1,y:ip(y0,y1,z10,z11)},eT={x:ip(x0,x1,z01,z11),y:y1},eL={x:x0,y:ip(y0,y1,z00,z01)};
+    const lk={1:[eL,eB],2:[eB,eR],3:[eL,eR],4:[eR,eT],5:[eL,eB,eR,eT],6:[eB,eT],7:[eL,eT],8:[eT,eL],9:[eT,eB],10:[eB,eL,eT,eR],11:[eT,eR],12:[eR,eL],13:[eR,eB],14:[eB,eL]};
+    const s=lk[code];
+    if(s){if(s.length===4){segs.push([s[0],s[1]]);segs.push([s[2],s[3]]);}else segs.push([s[0],s[1]]);}
+  }
+  // Chain
+  const eps=1e-10,cl=(a,b)=>Math.abs(a.x-b.x)<eps&&Math.abs(a.y-b.y)<eps;
+  const chains=[],used=new Uint8Array(segs.length);
+  for(let i=0;i<segs.length;i++){
+    if(used[i]) continue; used[i]=1;
+    const chain=[...segs[i]]; let changed=true;
+    while(changed){changed=false;const tail=chain[chain.length-1],head=chain[0];
+      for(let j=0;j<segs.length;j++){if(used[j]) continue;
+        if(cl(tail,segs[j][0])){chain.push(segs[j][1]);used[j]=1;changed=true;break;}
+        if(cl(tail,segs[j][1])){chain.push(segs[j][0]);used[j]=1;changed=true;break;}
+        if(cl(head,segs[j][1])){chain.unshift(segs[j][0]);used[j]=1;changed=true;break;}
+        if(cl(head,segs[j][0])){chain.unshift(segs[j][1]);used[j]=1;changed=true;break;}
+      }}
+    chains.push(chain);
+  }
+  return chains;
+}
+
+function sciGetContourChains(rawX, rawY, rawZ, level, gridN, xScale, yScale) {
+  // Replicate Python preprocessing: data1[np.isnan(data1)] = 0
+  const cleanX = rawX.map(v => isNaN(parseFloat(v)) ? 0 : parseFloat(v));
+  const cleanY = rawY.map(v => isNaN(parseFloat(v)) ? 0 : parseFloat(v));
+  const cleanZ = rawZ.map(v => isNaN(parseFloat(v)) ? 0 : parseFloat(v));
+
+  const valid = cleanX.map((_,i) => {
+    const vx = cleanX[i], vy = cleanY[i];
+    if (xScale==='log' && vx<=0) return false;
+    if (yScale==='log' && vy<=0) return false;
+    return true;
+  });
+
+  const x=[], y=[], z=[];
+  cleanX.forEach((_, i) => {
+    if (valid[i]) {
+      x.push(cleanX[i]);
+      y.push(cleanY[i]);
+      // Replicate Python: np.where(z == 0, 1E-99, z)
+      let vz = cleanZ[i];
+      if (vz === 0) vz = 1e-99;
+      z.push(vz);
+    }
+  });
+
+  if(x.length < 4) return null;
+  const logX = xScale==='log' ? x.map(v=>Math.log10(v)) : x;
+  const logY = yScale==='log' ? y.map(v=>Math.log10(v)) : y;
+  const {xg, yg, zgrid} = sciIDWGrid(logX, logY, z, gridN);
+  const chains = marchingSquares(xg, yg, zgrid, level);
+  
+  return chains.map(chain=>({
+    x: chain.map(p => xScale==='log' ? Math.pow(10, p.x) : p.x),
+    y: chain.map(p => yScale==='log' ? Math.pow(10, p.y) : p.y)
+  }));
+}
+
+function renderSciContour() {
+  const layers=SCI_LAYERS.filter(l=>l.visible&&l.data.length>=4);
+  if(!layers.length){notify('Add at least one layer with ≥4 data points','error');return;}
+  document.getElementById('sciPh').style.display='none';
+
+  const level=parseFloat(document.getElementById('sci_z').value)||9;
+  const gridN=parseInt(document.getElementById('sci_gridN').value)||200;
+  const xScale=document.getElementById('sci_xScale').value;
+  const yScale=document.getElementById('sci_yScale').value;
+  const lw=parseFloat(document.getElementById('sci_lw').value)||2.5;
+  const fo=parseFloat(document.getElementById('sci_fo').value)||0.18;
+  const pub=document.getElementById('sci_pub').checked;
+  const isDark=!document.documentElement.hasAttribute('data-theme')||document.documentElement.getAttribute('data-theme')==='midnight';
+  const bg=pub?'#ffffff':(isDark?'#1e293b':'#ffffff');
+  const tc=pub?'#1a1a1a':(isDark?'#e2e8f0':'#1a1a1a');
+  const gc=pub?'rgba(0,0,0,0.12)':(isDark?'#334155':'#e2e8f0');
+  const ff=pub?"'Helvetica Neue',Arial,sans-serif":"'Inter',sans-serif";
+
+  const traces=[];
+
+  layers.forEach(layer=>{
+    const x=layer.data.map(r=>r[layer.colX]),y=layer.data.map(r=>r[layer.colY]),z=layer.data.map(r=>r[layer.colZ]);
+    const dash=layer.lineStyle==='dash'?'dash':layer.lineStyle==='dot'?'dot':layer.lineStyle==='dashdot'?'dashdot':'solid';
+    const col=layer.color;
+
+    if(layer.fillMode){
+      const chains=sciGetContourChains(x,y,z,level,gridN,xScale,yScale);
+      if(chains&&chains.length){
+        let allPts=[]; chains.forEach(c=>allPts=allPts.concat(c.x.map((xv,i)=>({x:xv,y:c.y[i]}))));
+        allPts.sort((a,b)=>a.x-b.x);
+        const cx=allPts.map(p=>p.x),cy=allPts.map(p=>p.y),yFill=layer.yFill;
+        const fx=[...cx,...cx.slice().reverse()],fy=[...cy,...cx.map(()=>yFill)];
+        traces.push({x:fx,y:fy,type:'scatter',mode:'lines',fill:'toself',fillcolor:hexRgba(col,fo),line:{width:0,color:'transparent'},showlegend:false,hoverinfo:'skip'});
+        chains.forEach((chain,ci)=>traces.push({x:chain.x,y:chain.y,type:'scatter',mode:'lines',line:{color:col,width:lw,dash},name:ci===0?layer.label:undefined,showlegend:ci===0,legendgroup:layer.label}));
+      }
+    } else {
+      const chains=sciGetContourChains(x,y,z,level,gridN,xScale,yScale);
+      if(chains) chains.forEach((chain,ci)=>traces.push({x:chain.x,y:chain.y,type:'scatter',mode:'lines',line:{color:col,width:lw,dash},name:ci===0?layer.label:undefined,showlegend:ci===0,legendgroup:layer.label,hovertemplate:`<b>${layer.label}</b><br>x:%{x:.3g}<br>y:%{y:.3g}<extra></extra>`}));
+    }
+  });
+
+  // Reference lines
+  const xMinV=parseFloat(document.getElementById('sci_xMin').value);const xMaxV=parseFloat(document.getElementById('sci_xMax').value);
+  const yMinV=parseFloat(document.getElementById('sci_yMin').value);const yMaxV=parseFloat(document.getElementById('sci_yMax').value);
+  SCI_HLINES.forEach(rl=>{
+    const dash=rl.style==='dot'?'dot':rl.style==='dash'?'dash':rl.style==='dashdot'?'dashdot':'solid';
+    if(rl.axis==='h') traces.push({x:[isNaN(xMinV)?0.001:xMinV,isNaN(xMaxV)?1000:xMaxV],y:[rl.val,rl.val],type:'scatter',mode:'lines',line:{color:rl.color,width:rl.width,dash},name:rl.label||`y=${rl.val}`,showlegend:!!rl.label,hoverinfo:'skip'});
+    else traces.push({x:[rl.val,rl.val],y:[isNaN(yMinV)?1e-15:yMinV,isNaN(yMaxV)?1:yMaxV],type:'scatter',mode:'lines',line:{color:rl.color,width:rl.width,dash},name:rl.label||`x=${rl.val}`,showlegend:!!rl.label,hoverinfo:'skip'});
+  });
+
+  const ax={type:xScale==='log'?'log':'-',showgrid:true,gridcolor:gc,gridwidth:1,linecolor:pub?'#333':(isDark?'#475569':'#555'),linewidth:pub?1.5:1,ticks:'outside',tickfont:{family:ff,size:13,color:tc},mirror:pub,zeroline:false,showline:true};
+  const layout={
+    title:{text:document.getElementById('sci_title').value||'',font:{family:ff,size:18,color:tc}},
+    font:{family:ff,size:14,color:tc},paper_bgcolor:bg,plot_bgcolor:bg,
+    xaxis:{...ax,title:{text:document.getElementById('sci_xLabel').value||'',font:{family:ff,size:16,color:tc}},type:xScale==='log'?'log':'-',range:(!isNaN(xMinV)&&!isNaN(xMaxV)?[xScale==='log'?Math.log10(xMinV):xMinV,xScale==='log'?Math.log10(xMaxV):xMaxV]:undefined)},
+    yaxis:{...ax,title:{text:document.getElementById('sci_yLabel').value||'',font:{family:ff,size:16,color:tc}},type:yScale==='log'?'log':'-',range:(!isNaN(yMinV)&&!isNaN(yMaxV)?[yScale==='log'?Math.log10(yMinV):yMinV,yScale==='log'?Math.log10(yMaxV):yMaxV]:undefined)},
+    showlegend:true,
+    legend:{x:.02,y:.98,bgcolor:'rgba(255,255,255,.88)',bordercolor:'#ccc',borderwidth:1,font:{family:ff,size:13}},
+    margin:{l:80,r:35,t:55,b:75},
+    annotations:SCI_ANNOTS.map(a=>({
+      x:xScale==='log'?Math.log10(a.x):a.x,y:yScale==='log'?Math.log10(a.y):a.y,
+      xref:'x',yref:'y',text:a.text,showarrow:false,
+      font:{size:a.size,color:a.color,family:ff}
+    }))
+  };
+
+  Plotly.react('sciPlot',traces,layout,{responsive:true,displayModeBar:true,toImageButtonOptions:{format:'svg',filename:'sci_contour',scale:4}});
+  APP._sciTraces=traces; APP._sciLayout=layout;
+  notify(`Rendered ${traces.length} traces`,'success');
+}
+
+function sciExport(fmt) { const el=document.getElementById('sciPlot'); if(!el?.data){notify('Render first','error');return;} Plotly.downloadImage(el,{format:fmt,scale:4,filename:'sci_contour'}); }
+function sciAddToDash() { if(!APP._sciTraces){notify('Render first','error');return;} addToDash(document.getElementById('sci_title').value||'Sci Contour',APP._sciTraces,APP._sciLayout); }
+
+function hexRgba(hex,a){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);return`rgba(${r},${g},${b},${a})`;}
+
+// ============================================================
+// STATISTICS ENGINE
+// ============================================================
+function populateStatFields() {
+  if (!APP.numCols.length) return;
+  ['regY','bayVar','ccX','ccY'].forEach(id => {
+    const el=document.getElementById(id); if(!el) return;
+    el.innerHTML=APP.numCols.map(c=>`<option value="${c}">${c}</option>`).join('');
+  });
+  if (document.getElementById('ccY') && APP.numCols.length>1) document.getElementById('ccY').value=APP.numCols[1];
+  const rxd=document.getElementById('regXChecks'); if(rxd) rxd.innerHTML=APP.numCols.map((c,i)=>`<label class="fchk" style="margin-bottom:3px"><input type="checkbox" class="regX" value="${c}" ${i===0?'checked':''}><span style="font-size:12px">${c}</span></label>`).join('');
+  buildTestFields();
+}
+
+function buildTestFields() {
+  const type=document.getElementById('testType')?.value; if(!type) return;
+  const c=document.getElementById('testFields'); if(!c) return;
+  const numOpts=APP.numCols.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const catOpts=APP.catCols.map(c=>`<option value="${c}">${c}</option>`).join('');
+  let html='';
+  if(['ttest_ind','ttest_paired','mannwhitney','ks'].includes(type)){
+    html=`<div class="fg"><label class="fl">Group 1</label><select class="fs" id="tv1">${numOpts}</select></div>`;
+    html+=`<div class="fg"><label class="fl">Group 2</label><select class="fs" id="tv2" style="margin-top:0">${numOpts.replace('selected','').replace(/value="[^"]*">/,m=>m.replace('>','selected>'))}</select></div>`;
+    if(APP.numCols.length>1) setTimeout(()=>{const el=document.getElementById('tv2');if(el&&APP.numCols.length>1)el.value=APP.numCols[1];},10);
+  } else if(type==='ttest_one'){
+    html=`<div class="fg"><label class="fl">Variable</label><select class="fs" id="tv1">${numOpts}</select></div><div class="fg"><label class="fl">μ₀ (null mean)</label><input class="fi" id="tmu0" type="number" value="0"></div>`;
+  } else if(type==='anova'){
+    html=`<div class="fg"><label class="fl">Values</label><select class="fs" id="tv1">${numOpts}</select></div><div class="fg"><label class="fl">Groups</label><select class="fs" id="tgv">${catOpts}</select></div>`;
+  } else if(type==='chi2'){
+    html=`<div class="fg"><label class="fl">Cat 1</label><select class="fs" id="tc1">${catOpts}</select></div><div class="fg"><label class="fl">Cat 2</label><select class="fs" id="tc2">${catOpts.replace(/value="[^"]*">/,m=>m.replace('>','selected>'))}</select></div>`;
+  }
+  c.innerHTML=html;
+}
+
+// Statistical math helpers
+function meanArr(a){return a.length?a.reduce((s,v)=>s+v,0)/a.length:0;}
+function stdDev(a){if(a.length<2)return 0;const m=meanArr(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1));}
+function corrCoef(x,y){const n=Math.min(x.length,y.length);if(n<2)return 0;const mx=meanArr(x.slice(0,n)),my=meanArr(y.slice(0,n));let num=0,dx=0,dy=0;for(let i=0;i<n;i++){num+=(x[i]-mx)*(y[i]-my);dx+=(x[i]-mx)**2;dy+=(y[i]-my)**2;}return dx&&dy?num/Math.sqrt(dx*dy):0;}
+function tPValue(t, df) {
+  const x = df / (df + t * t);
+  const p = 0.5 * incompleteBeta(x, df / 2, 0.5);
+  return Math.min(1, 2 * p);
+}
+function lnGamma(z){const c=[76.18009173,-86.50532033,24.01409822,-1.231739516,.00120858003,-.00000536382];let x=z-1,tmp=x+5.5;tmp-=(x+.5)*Math.log(tmp);let ser=1;for(let j=0;j<6;j++)ser+=c[j]/++x;return-tmp+Math.log(2.50662827465*ser);}
+function incompleteBeta(x,a,b,maxI=200){if(x<=0)return 0;if(x>=1)return 1;const lnB=lnGamma(a)+lnGamma(b)-lnGamma(a+b);const front=Math.exp(Math.log(x)*a+Math.log(1-x)*b-lnB)/a;let f=1,c=1,d=0;for(let i=0;i<=maxI;i++){let m=i,num;if(i===0)num=1;else if(i%2===0){m=i/2;num=m*(b-m)*x/((a+2*m-1)*(a+2*m));}else{m=(i-1)/2;num=-(a+m)*(a+b+m)*x/((a+2*m)*(a+2*m+1));}d=1+num*d;if(Math.abs(d)<1e-30)d=1e-30;d=1/d;c=1+num/c;if(Math.abs(c)<1e-30)c=1e-30;f*=d*c;if(Math.abs(d*c-1)<1e-8)break;}return front*(f-1);}
+function normalCDF(x){return .5*(1+erf(x/Math.sqrt(2)));}
+function erf(x){const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911;const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+p*x);return s*(1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x));}
+
+function runRegression() {
+  if(!APP.data){notify('Load data first','error');return;}
+  const depVar=document.getElementById('regY').value;
+  const indVars=Array.from(document.querySelectorAll('.regX:checked')).map(cb=>cb.value).filter(v=>v!==depVar);
+  const type=document.getElementById('regType').value;
+  if(!depVar||!indVars.length){notify('Select Y and at least one X','error');return;}
+  const n=APP.data.length;
+  const y=APP.data.map(r=>parseFloat(r[depVar])).filter(v=>!isNaN(v));
+  const isDark=!document.documentElement.hasAttribute('data-theme')||document.documentElement.getAttribute('data-theme')==='midnight';
+  const bg=isDark?'#1e293b':'#fff';const tc=isDark?'#e2e8f0':'#1a1a1a';
+  const pal2=getPal();
+
+  if(type==='poly'){
+    const deg=parseInt(document.getElementById('polyN').value);
+    const xRaw=APP.data.slice(0,n).map(r=>parseFloat(r[indVars[0]])||0);
+    const xData=xRaw.map(xv=>Array.from({length:deg+1},(_,d)=>xv**d));
+    const p=deg+1;
+    const XtX=matMul(transpose(xData),xData);const beta=matVecMul(matInv(XtX),matVecMul(transpose(xData),y));
+    const yHat=xData.map(row=>row.reduce((s,v,i)=>s+v*beta[i],0));
+    const SSE=y.reduce((s,yi,i)=>s+(yi-yHat[i])**2,0),SST=y.reduce((s,yi)=>s+(yi-meanArr(y))**2,0);
+    const R2=1-SSE/SST;
+    const xSorted=[...xRaw].sort((a,b)=>a-b);const ys=xSorted.map(xv=>beta.reduce((s,b2,d)=>s+b2*xv**d,0));
+    Plotly.react('regPlot',[{x:xRaw,y,type:'scatter',mode:'markers',marker:{color:pal2[0],size:5,opacity:.6},name:'Data'},{x:xSorted,y:ys,type:'scatter',mode:'lines',line:{color:pal2[1]||'red',width:2.5},name:`Degree ${deg}`}],{title:{text:`Polynomial Regression (deg=${deg}, R²=${R2.toFixed(4)})`},paper_bgcolor:bg,plot_bgcolor:bg,font:{color:tc,family:'Inter'},margin:{t:40,b:50,l:60,r:20}},{responsive:true});
+    document.getElementById('regResults').innerHTML=`Polynomial Regression (degree ${deg})\nR² = ${R2.toFixed(6)}\n\nCoefficients:\n`+beta.map((b2,i)=>`  x^${i}: <span class="c">${b2.toFixed(6)}</span>`).join('\n');
+    return;
+  }
+
+  const xData=APP.data.slice(0,n).map(r=>[1,...indVars.map(v=>parseFloat(r[v])||0)]);
+  const p=xData[0].length;
+  const XtX=matMul(transpose(xData),xData);const XtXinv=matInv(XtX);
+  const Xty=matVecMul(transpose(xData),y);const beta=matVecMul(XtXinv,Xty);
+  const yHat=xData.map(row=>row.reduce((s,v,i)=>s+v*beta[i],0));
+  const residuals=y.map((yi,i)=>yi-yHat[i]);
+  const SSE=residuals.reduce((s,r)=>s+r*r,0),SST=y.reduce((s,yi)=>s+(yi-meanArr(y))**2,0);
+  const R2=1-SSE/SST,adjR2=1-(1-R2)*(n-1)/(n-p),MSE=SSE/(n-p);
+  const se=XtXinv.map((row,i)=>Math.sqrt(Math.max(0,row[i]*MSE)));
+  const tStats=beta.map((b2,i)=>b2/se[i]);const pValues=tStats.map(t=>tPValue(t,n-p));
+  const names=['Intercept',...indVars];
+  let res=`OLS Regression Results\n${'─'.repeat(50)}\nR²: <span class="c">${R2.toFixed(6)}</span>  Adj.R²: <span class="c">${adjR2.toFixed(6)}</span>  MSE: ${MSE.toFixed(4)}  N: ${n}\n${'─'.repeat(50)}\n${'Variable'.padEnd(14)} ${'Coeff'.padStart(10)} ${'StdErr'.padStart(10)} ${'t-stat'.padStart(8)} ${'P>|t|'.padStart(8)} Sig\n${'─'.repeat(50)}\n`;
+  names.forEach((nm,i)=>{const p2=pValues[i];const sig=p2<.001?'***':p2<.01?'**':p2<.05?'*':'';const cls=p2<.05?'s':'ns';res+=`${nm.slice(0,13).padEnd(14)} <span class="${cls}">${beta[i].toFixed(4).padStart(10)}</span>${se[i].toFixed(4).padStart(11)}${tStats[i].toFixed(3).padStart(9)} <span class="${cls}">${p2.toFixed(4).padStart(8)}</span> ${sig}\n`;});
+  res+=`${'─'.repeat(50)}\n*** p<.001  ** p<.01  * p<.05`;
+  document.getElementById('regResults').innerHTML=res;
+
+  const xPlot=indVars.length===1?APP.data.slice(0,n).map(r=>parseFloat(r[indVars[0]])):yHat;
+  const xLabel=indVars.length===1?indVars[0]:'Predicted';
+  const sorted=xPlot.map((xv,i)=>({x:xv,yh:yHat[i]})).sort((a,b)=>a.x-b.x);
+  const traces=[{x:xPlot,y,type:'scatter',mode:'markers',marker:{color:pal2[0],size:5,opacity:.6},name:'Data'},{x:sorted.map(d=>d.x),y:sorted.map(d=>d.yh),type:'scatter',mode:'lines',line:{color:pal2[1]||'red',width:2.5},name:'Fit'}];
+  if(document.getElementById('regCI').checked){const tCrit=1.96,ciM=tCrit*Math.sqrt(MSE);traces.push({x:sorted.map(d=>d.x),y:sorted.map(d=>d.yh+ciM),type:'scatter',mode:'lines',line:{width:0},showlegend:false},{x:sorted.map(d=>d.x),y:sorted.map(d=>d.yh-ciM),type:'scatter',mode:'lines',line:{width:0},fill:'tonexty',fillcolor:(pal2[1]||'red')+'20',name:'95% CI'});}
+  Plotly.react('regPlot',traces,{title:{text:`${type==='multiple'?'Multiple':'Simple'} Linear Regression (R²=${R2.toFixed(4)})`},xaxis:{title:xLabel},yaxis:{title:depVar},paper_bgcolor:bg,plot_bgcolor:bg,font:{color:tc,family:'Inter'},margin:{t:40,b:50,l:60,r:20}},{responsive:true});
+  notify('Regression complete','success');
+}
+
+function runHypTest() {
+  if(!APP.data){notify('Load data first','error');return;}
+  const type=document.getElementById('testType').value;
+  const alpha=parseFloat(document.getElementById('testAlpha').value);
+  const isDark=!document.documentElement.hasAttribute('data-theme')||document.documentElement.getAttribute('data-theme')==='midnight';
+  const bg=isDark?'#1e293b':'#fff';const tc=isDark?'#e2e8f0':'#1a1a1a';
+  const pal2=getPal();
+  let res='',traces=[],layout={paper_bgcolor:bg,plot_bgcolor:bg,font:{color:tc,family:'Inter'},margin:{t:30,b:40,l:50,r:20},showlegend:true};
+
+  if(['ttest_ind','mannwhitney','ks'].includes(type)){
+    const v1=document.getElementById('tv1')?.value,v2=document.getElementById('tv2')?.value;
+    if(!v1||!v2){notify('Select two variables','error');return;}
+    const d1=APP.data.map(r=>parseFloat(r[v1])).filter(v=>!isNaN(v));const d2=APP.data.map(r=>parseFloat(r[v2])).filter(v=>!isNaN(v));
+    const m1=meanArr(d1),m2=meanArr(d2),s1=stdDev(d1),s2=stdDev(d2),n1=d1.length,n2=d2.length;
+    const se=Math.sqrt(s1*s1/n1+s2*s2/n2),t=(m1-m2)/se;const df=Math.floor((s1*s1/n1+s2*s2/n2)**2/((s1*s1/n1)**2/(n1-1)+(s2*s2/n2)**2/(n2-1)));const p=tPValue(t,df);
+    res=`T-Test: ${v1} vs ${v2}\n${'─'.repeat(40)}\n${v1}: M=${m1.toFixed(4)}, SD=${s1.toFixed(4)}, n=${n1}\n${v2}: M=${m2.toFixed(4)}, SD=${s2.toFixed(4)}, n=${n2}\n\nt = <span class="c">${t.toFixed(4)}</span>  df = ${df}\np = <span class="${p<alpha?'s':'ns'}">${p.toFixed(6)} ${p<alpha?'★ Significant':'Not significant'}</span>  α = ${alpha}`;
+    traces=[{y:d1,type:'violin',name:v1,side:'negative',line:{color:pal2[0]},fillcolor:pal2[0]+'50',meanline:{visible:true},box:{visible:true}},{y:d2,type:'violin',name:v2,side:'positive',line:{color:pal2[1]||pal2[0]},fillcolor:(pal2[1]||pal2[0])+'50',meanline:{visible:true},box:{visible:true}}];
+  } else if(type==='ttest_one'){
+    const v1=document.getElementById('tv1')?.value,mu0=parseFloat(document.getElementById('tmu0')?.value)||0;
+    if(!v1){notify('Select a variable','error');return;}
+    const d=APP.data.map(r=>parseFloat(r[v1])).filter(v=>!isNaN(v));const m=meanArr(d),s=stdDev(d),n=d.length;const t=(m-mu0)/(s/Math.sqrt(n));const p=tPValue(t,n-1);
+    res=`One-Sample T-Test: ${v1}\n${'─'.repeat(40)}\nM=${m.toFixed(4)}, SD=${s.toFixed(4)}, n=${n}  μ₀=${mu0}\nt = <span class="c">${t.toFixed(4)}</span>  p = <span class="${p<alpha?'s':'ns'}">${p.toFixed(6)}</span>`;
+    traces=[{x:d,type:'histogram',marker:{color:pal2[0]},name:v1},{x:[mu0,mu0],y:[0,d.length/5],type:'scatter',mode:'lines',line:{color:'red',width:2,dash:'dash'},name:`μ₀=${mu0}`}];
+  } else if(type==='anova'){
+    const v1=document.getElementById('tv1')?.value,gv=document.getElementById('tgv')?.value;if(!v1||!gv){notify('Select variables','error');return;}
+    const groups=[...new Set(APP.data.map(r=>r[gv]))];const gd=groups.map(g=>APP.data.filter(r=>r[gv]===g).map(r=>parseFloat(r[v1])).filter(v=>!isNaN(v)));const grandM=meanArr(APP.data.map(r=>parseFloat(r[v1])).filter(v=>!isNaN(v)));const k=groups.length,N=gd.reduce((s,g)=>s+g.length,0);const SSB=gd.reduce((s,g)=>s+g.length*(meanArr(g)-grandM)**2,0);const SSW=gd.reduce((s,g)=>s+g.reduce((ss,v)=>ss+(v-meanArr(g))**2,0),0);const F=(SSB/(k-1))/(SSW/(N-k));const p=1-fCDF(F,k-1,N-k);
+    res=`One-Way ANOVA: ${v1} by ${gv}\n${'─'.repeat(40)}\nk=${k}, N=${N}  F=<span class="c">${F.toFixed(4)}</span>  p=<span class="${p<alpha?'s':'ns'}">${p.toFixed(6)}</span>`;
+    traces=groups.map((g,i)=>({y:gd[i],type:'box',name:String(g),marker:{color:pal2[i%pal2.length]}}));
+  } else if(type==='chi2'){
+    const c1=document.getElementById('tc1')?.value,c2=document.getElementById('tc2')?.value;if(!c1||!c2){notify('Select variables','error');return;}
+    const v1=[...new Set(APP.data.map(r=>r[c1]))],v2=[...new Set(APP.data.map(r=>r[c2]))];const obs=v1.map(a=>v2.map(b=>APP.data.filter(r=>r[c1]===a&&r[c2]===b).length));const rT=obs.map(r=>r.reduce((s,v)=>s+v,0));const N=rT.reduce((s,v)=>s+v,0);const cT=v2.map((_,j)=>obs.reduce((s,r)=>s+r[j],0));const exp=v1.map((_,i)=>v2.map((_,j)=>rT[i]*cT[j]/N));let chi2=0;for(let i=0;i<v1.length;i++)for(let j=0;j<v2.length;j++)chi2+=(obs[i][j]-exp[i][j])**2/exp[i][j];const df=(v1.length-1)*(v2.length-1);const p=1-chi2CDF(chi2,df);
+    res=`Chi-Squared Test: ${c1} × ${c2}\n${'─'.repeat(40)}\nχ²=<span class="c">${chi2.toFixed(4)}</span>  df=${df}  p=<span class="${p<alpha?'s':'ns'}">${p.toFixed(6)}</span>`;
+    traces=[{z:obs,x:v2,y:v1,type:'heatmap',colorscale:'Blues'}];
+  }
+
+  document.getElementById('hypResults').innerHTML=res;
+  Plotly.react('hypPlot',traces,layout,{responsive:true});
+  notify('Test complete','success');
+}
+
+function fCDF(x,d1,d2){if(x<=0)return 0;const v=d1*x/(d1*x+d2);return 1-incompleteBeta(1-v,d2/2,d1/2);}
+function chi2CDF(x,k){if(x<=0)return 0;return gammaInc(k/2,x/2);}
+function gammaInc(a,x){if(x<0)return 0;if(x===0)return 0;if(x<a+1){let sum=1/a,term=1/a;for(let n=1;n<200;n++){term*=x/(a+n);sum+=term;if(Math.abs(term)<1e-10)break;}return sum*Math.exp(-x+a*Math.log(x)-lnGamma(a));}let b=x+1-a,c=1e30,d=1/b,h=d;for(let i=1;i<200;i++){const an=-i*(i-a),bn=x+2*i+1-a;d=bn+an*d;if(Math.abs(d)<1e-30)d=1e-30;d=1/d;c=bn+an/c;if(Math.abs(c)<1e-30)c=1e-30;h*=d*c;if(Math.abs(d*c-1)<1e-10)break;}return 1-h*Math.exp(-x+a*Math.log(x)-lnGamma(a));}
+
+function runBayesian() {
+  if(!APP.data){notify('Load data first','error');return;}
+  const v=document.getElementById('bayVar').value;const prM=parseFloat(document.getElementById('bayPriorM').value)||0;const prS=parseFloat(document.getElementById('bayPriorS').value)||10;const nIter=parseInt(document.getElementById('bayIter').value)||5000;const ci=parseFloat(document.getElementById('bayCI').value)||.95;
+  const isDark=!document.documentElement.hasAttribute('data-theme')||document.documentElement.getAttribute('data-theme')==='midnight';const bg=isDark?'#1e293b':'#fff';const tc=isDark?'#e2e8f0':'#1a1a1a';const pal2=getPal();
+  const data2=APP.data.map(r=>parseFloat(r[v])).filter(vv=>!isNaN(vv));const n=data2.length,dM=meanArr(data2),dS=stdDev(data2);
+  const prPrec=1/prS**2,dPrec=n/dS**2,postPrec=prPrec+dPrec,postM=(prPrec*prM+dPrec*dM)/postPrec,postS=1/Math.sqrt(postPrec);
+  const chain=[postM];let cur=postM;
+  for(let i=1;i<nIter;i++){const prop=cur+(Math.random()*2-1)*postS*2.4;const logA=-.5*((prop-postM)/postS)**2+.5*((cur-postM)/postS)**2;if(Math.log(Math.random())<logA)cur=prop;chain.push(cur);}
+  const xr=Array.from({length:300},(_,i)=>postM-4.5*postS+i*9*postS/299);
+  const postY=xr.map(xv=>Math.exp(-.5*((xv-postM)/postS)**2)/(postS*Math.sqrt(2*Math.PI)));
+  const priorY=xr.map(xv=>Math.exp(-.5*((xv-prM)/prS)**2)/(prS*Math.sqrt(2*Math.PI)));
+  const sorted2=[...chain].sort((a,b)=>a-b);const lo=sorted2[Math.floor((1-ci)/2*sorted2.length)],hi=sorted2[Math.floor((1+ci)/2*sorted2.length)];
+  const base={paper_bgcolor:bg,plot_bgcolor:bg,font:{color:tc,family:'Inter'},margin:{t:35,b:45,l:60,r:20}};
+  Plotly.react('bayPostPlot',[{x:xr,y:priorY,type:'scatter',mode:'lines',name:'Prior',line:{color:'#999',width:2,dash:'dash'}},{x:xr,y:postY,type:'scatter',mode:'lines',fill:'tozeroy',name:'Posterior',line:{color:pal2[0],width:2.5},fillcolor:pal2[0]+'22'},{x:[lo,lo],y:[0,Math.max(...postY)],type:'scatter',mode:'lines',line:{color:'red',dash:'dot',width:1.5},name:`${(ci*100).toFixed(0)}% CI`},{x:[hi,hi],y:[0,Math.max(...postY)],type:'scatter',mode:'lines',line:{color:'red',dash:'dot',width:1.5},showlegend:false}],{...base,title:{text:'Posterior Distribution'},xaxis:{title:v},yaxis:{title:'Density'}},{responsive:true});
+  Plotly.react('bayTracePlot',[{y:chain,type:'scatter',mode:'lines',line:{color:pal2[0],width:.7},name:'MCMC Trace'}],{...base,title:{text:'MCMC Trace'},xaxis:{title:'Iteration'},yaxis:{title:v}},{responsive:true});
+  document.getElementById('bayResults').innerHTML=`Bayesian Normal Mean\n${'─'.repeat(40)}\nPrior: N(${prM}, ${prS}²)\nData: n=${n}, x̄=${dM.toFixed(4)}, s=${dS.toFixed(4)}\nPosterior: N(<span class="c">${postM.toFixed(4)}</span>, ${postS.toFixed(4)}²)\n${(ci*100).toFixed(0)}% Credible Interval: [<span class="s">${lo.toFixed(4)}</span>, <span class="s">${hi.toFixed(4)}</span>]\nMCMC: ${nIter} iters, chain mean=${meanArr(chain).toFixed(4)}`;
+  notify('Bayesian inference complete','success');
+}
+
+function runConfContour() {
+  if(!APP.data){notify('Load data first','error');return;}
+  const xc=document.getElementById('ccX').value,yc=document.getElementById('ccY').value;const cType=document.getElementById('ccType').value;const isDark=!document.documentElement.hasAttribute('data-theme')||document.documentElement.getAttribute('data-theme')==='midnight';const bg=isDark?'#1e293b':'#fff';const tc=isDark?'#e2e8f0':'#1a1a1a';const pal2=getPal();
+  const xd=APP.data.map(r=>parseFloat(r[xc])).filter(v=>!isNaN(v));const yd=APP.data.map(r=>parseFloat(r[yc])).filter(v=>!isNaN(v));const n=Math.min(xd.length,yd.length);const mx=meanArr(xd.slice(0,n)),my=meanArr(yd.slice(0,n)),sx=stdDev(xd.slice(0,n)),sy=stdDev(yd.slice(0,n)),r=corrCoef(xd.slice(0,n),yd.slice(0,n));
+  const gN=80;const xr=Array.from({length:gN},(_,i)=>mx-3.5*sx+i*7*sx/(gN-1));const yr=Array.from({length:gN},(_,i)=>my-3.5*sy+i*7*sy/(gN-1));const z=yr.map(yv=>xr.map(xv=>{const zx=(xv-mx)/sx,zy=(yv-my)/sy;return Math.exp(-1/(2*(1-r*r))*(zx*zx-2*r*zx*zy+zy*zy));}));
+  if(cType==='3d'){Plotly.react('ccPlot',[{x:xr,y:yr,z,type:'surface',colorscale:'Viridis',opacity:.9}],{title:{text:`3D Likelihood Surface: ${xc} vs ${yc}`},scene:{xaxis:{title:xc},yaxis:{title:yc},zaxis:{title:'Likelihood'}},paper_bgcolor:bg,font:{color:tc,family:'Inter'},margin:{t:40,b:30,l:30,r:20}},{responsive:true});}
+  else{Plotly.react('ccPlot',[{x:xd.slice(0,n),y:yd.slice(0,n),type:'scatter',mode:'markers',marker:{color:pal2[0],size:4,opacity:.3},name:'Data'},{x:xr,y:yr,z,type:'contour',colorscale:'Plasma',contours:{coloring:'none',showlabels:true},line:{width:2},showscale:false,ncontours:8}],{title:{text:`2D Contours: ${xc} vs ${yc}`},xaxis:{title:xc},yaxis:{title:yc},paper_bgcolor:bg,plot_bgcolor:bg,font:{color:tc,family:'Inter'},margin:{t:40,b:50,l:60,r:20}},{responsive:true});}
+  notify('Contours generated','success');
+}
+
+// Matrix ops for OLS
+function transpose(m){return m[0].map((_,i)=>m.map(r=>r[i]));}
+function matMul(a,b){return a.map(row=>b[0].map((_,j)=>row.reduce((s,v,k)=>s+v*b[k][j],0)));}
+function matVecMul(m,v){return m.map(row=>row.reduce((s,val,j)=>s+val*v[j],0));}
+function matInv(m){const n=m.length;const aug=m.map((row,i)=>[...row,...Array(n).fill(0).map((_,j)=>i===j?1:0)]);for(let i=0;i<n;i++){let mr=i;for(let k=i+1;k<n;k++)if(Math.abs(aug[k][i])>Math.abs(aug[mr][i]))mr=k;[aug[i],aug[mr]]=[aug[mr],aug[i]];if(Math.abs(aug[i][i])<1e-12)aug[i][i]=1e-12;const p=aug[i][i];for(let j=0;j<2*n;j++)aug[i][j]/=p;for(let k=0;k<n;k++){if(k!==i){const f=aug[k][i];for(let j=0;j<2*n;j++)aug[k][j]-=f*aug[i][j];}}}return aug.map(r=>r.slice(n));}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function addToDash(title, traces, layout) {
+  const id=++APP.dashId;
+  APP.dashPanels.push({id,title,traces:JSON.parse(JSON.stringify(traces)),layout:JSON.parse(JSON.stringify(layout))});
+  renderDashboard();
+  notify(`"${title}" added to dashboard`,'success');
+}
+
+function addStatToDash(plotId, name) {
+  const el=document.getElementById(plotId);if(!el?.data){notify('Generate first','error');return;}
+  addToDash(name,el.data,el.layout);
+}
+
+let _dashSortable = null;
+
+function renderDashboard() {
+  const grid=document.getElementById('dashGrid');const empty=document.getElementById('dashEmpty');
+  document.getElementById('dashCount').textContent=APP.dashPanels.length;
+  if(!APP.dashPanels.length){empty.style.display='';return;}
+  empty.style.display='none';
+  const cells=grid.querySelectorAll('.dash-cell');cells.forEach(c=>c.remove());
+  
+  APP.dashPanels.forEach(panel=>{
+    const div=document.createElement('div');div.className='dash-cell';div.dataset.id=panel.id;
+    div.innerHTML=`<div class="dash-hdr"><span class="dash-title">${esc(panel.title)}</span><div class="dash-acts"><button onclick="Plotly.downloadImage(document.getElementById('dp${panel.id}'),{format:'png',scale:3,filename:'${esc(panel.title).replace(/"/g, '&quot;')}'})" title="PNG">📷</button><button onclick="Plotly.downloadImage(document.getElementById('dp${panel.id}'),{format:'svg',scale:3,filename:'${esc(panel.title).replace(/"/g, '&quot;')}'})" title="SVG">🎨</button><button onclick="removeDashPanel(${panel.id})" title="Remove">✕</button></div></div><div id="dp${panel.id}" style="width:100%;height:330px"></div>`;
+    grid.insertBefore(div,grid.lastElementChild);
+  });
+  
+  requestAnimationFrame(() => {
+    APP.dashPanels.forEach(panel => {
+      const el = document.getElementById(`dp${panel.id}`);
+      if (!el) return;
+      const lay={...panel.layout,width:undefined,height:330,margin:{l:50,r:20,t:30,b:40}};
+      if (el._fullLayout) Plotly.react(el, panel.traces, lay, {responsive:true, displayModeBar:false});
+      else Plotly.newPlot(el, panel.traces, lay, {responsive:true, displayModeBar:false});
+      if (window.MathJax?.typesetPromise) MathJax.typesetPromise([el]);
+    });
+  });
+
+  if (_dashSortable) { _dashSortable.destroy(); _dashSortable = null; }
+  if(typeof Sortable!=='undefined' && APP.dashPanels.length > 1){
+    _dashSortable = new Sortable(grid,{handle:'.dash-hdr',animation:200,ghostClass:'sortable-ghost',onEnd(evt){
+      const[mv]=APP.dashPanels.splice(evt.oldIndex,1);
+      APP.dashPanels.splice(evt.newIndex,0,mv);
+    }});
+  }
+}
+
+function changeDashFormat(fmt) {
+  const grid = document.getElementById('dashGrid');
+  if (!grid) return;
+  grid.style.width = 'auto'; grid.style.margin = '0';
+  
+  switch(fmt) {
+    case 'fluid': grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(440px, 1fr))'; break;
+    case 'masonry': grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(350px, 1fr))'; break;
+    case 'small_g': grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(250px, 1fr))'; break;
+    case 'large_g': grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(600px, 1fr))'; break;
+
+    case '1col': grid.style.gridTemplateColumns = '1fr'; break;
+    case '2col': grid.style.gridTemplateColumns = 'repeat(2, 1fr)'; break;
+    case '3col': grid.style.gridTemplateColumns = 'repeat(3, 1fr)'; break;
+    case '4col': grid.style.gridTemplateColumns = 'repeat(4, 1fr)'; break;
+    case '5col': grid.style.gridTemplateColumns = 'repeat(5, 1fr)'; break;
+
+    case 'ls_n': grid.style.gridTemplateColumns = '1fr 3fr'; break;
+    case 'rs_n': grid.style.gridTemplateColumns = '3fr 1fr'; break;
+    case 'ls_w': grid.style.gridTemplateColumns = '1fr 2fr'; break;
+    case 'rs_w': grid.style.gridTemplateColumns = '2fr 1fr'; break;
+    case 'split_b': grid.style.gridTemplateColumns = '1fr 4fr'; break;
+    case 'split_e': grid.style.gridTemplateColumns = '1fr 4fr 1fr'; break;
+
+    case 'gold_l': grid.style.gridTemplateColumns = '38.2% 61.8%'; break;
+    case 'gold_r': grid.style.gridTemplateColumns = '61.8% 38.2%'; break;
+    case 'fibo': grid.style.gridTemplateColumns = '1fr 1fr 2fr 3fr'; break;
+    case 'trin': grid.style.gridTemplateColumns = '1fr 2fr 3fr'; break;
+    case 'trin_r': grid.style.gridTemplateColumns = '3fr 2fr 1fr'; break;
+
+    case 'cntr_3': grid.style.gridTemplateColumns = '1fr 3fr 1fr'; break;
+    case 'cntr_4': grid.style.gridTemplateColumns = '1fr 2fr 2fr 1fr'; break;
+    case 'asym_1': grid.style.gridTemplateColumns = '1fr 2fr 1fr'; break;
+    case 'asym_2': grid.style.gridTemplateColumns = '2fr 1fr 2fr'; break;
+    case 'quad_a': grid.style.gridTemplateColumns = '2fr 1fr 1fr 2fr'; break;
+
+    case 'widescr': grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(30vw, 1fr))'; break;
+    case 'uwidescr': grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(20vw, 1fr))'; break;
+    case 'a4_p': grid.style.gridTemplateColumns = '1fr'; grid.style.width = '210mm'; grid.style.margin = '0 auto'; break;
+    case 'a4_l': grid.style.gridTemplateColumns = 'repeat(2, 1fr)'; grid.style.width = '297mm'; grid.style.margin = '0 auto'; break;
+    case 'mobile': grid.style.gridTemplateColumns = '1fr'; grid.style.width = '375px'; grid.style.margin = '0 auto'; break;
+  }
+  
+  // Force Plotly to resize graphs dynamically
+  setTimeout(() => {
+    APP.dashPanels.forEach(p => {
+       const el = document.getElementById('dp'+p.id);
+       if(el) { Plotly.Plots.resize(el); }
+    });
+  }, 250);
+}
+
+function removeDashPanel(id){APP.dashPanels=APP.dashPanels.filter(p=>p.id!==id);renderDashboard();}
+function clearDashboard(){APP.dashPanels=[];renderDashboard();}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function expJSON(){dlStr(JSON.stringify(APP.dashPanels.map(p=>({title:p.title,traces:p.traces,layout:p.layout})),null,2),'vizdash_dashboard.json','application/json');document.getElementById('exportModal').classList.remove('active');}
+function expHTML(){
+  const plot=APP.dashPanels.map((p,i)=>`<div style="margin:16px;background:#fff;border-radius:8px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.08)"><h3 style="margin-bottom:8px;font-family:Inter,sans-serif">${p.title}</h3><div id="p${i}"></div></div>`).join('');
+  const init=APP.dashPanels.map((p,i)=>`Plotly.newPlot('p${i}',${JSON.stringify(p.traces)},${JSON.stringify({...p.layout,width:undefined})},{responsive:true})`).join(';');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>VizDash Pro Dashboard</title><script src="https://cdn.plot.ly/plotly-2.35.2.min.js"><\/script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"><style>body{font-family:Inter,sans-serif;background:#f5f5f5;margin:0;padding:20px}h1{text-align:center;color:#2c3e50;margin-bottom:18px}</style></head><body><h1>📊 VizDash Pro Dashboard</h1>${plot}<script>${init}<\/script></body></html>`;
+  dlStr(html,'vizdash_dashboard.html','text/html');document.getElementById('exportModal').classList.remove('active');
+}
+function expAllPNG(){APP.dashPanels.forEach(p=>{const el=document.getElementById(`dp${p.id}`);if(el)Plotly.downloadImage(el,{format:'png',scale:3,filename:p.title});});document.getElementById('exportModal').classList.remove('active');}
+function dlStr(content,name,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=name;a.click();URL.revokeObjectURL(a.href);}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+function notify(msg,type='info'){const el=document.getElementById('notif');const ic=document.getElementById('notifIcon');const tx=document.getElementById('notifText');el.className='notif '+type;ic.textContent=type==='success'?'✓':type==='error'?'✕':'ℹ';tx.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3200);}
+
+// ============================================================
+// INIT
+// ============================================================
+// ============================================================
+// SMART SUGGEST
+// ============================================================
+function buildSmartRecommendations() {
+  const c = document.getElementById('recoContent');
+  if (!c || !APP.data || !APP.columns.length) return;
+  const nc = APP.numCols, cat = APP.catCols, dt = APP.dtCols;
+  const n = APP.data.length;
+
+  const plotRecos = [];
+  if (nc.length >= 2) plotRecos.push({icon:'🔵',name:'Scatter Plot',why:`${nc[0]} vs ${nc[1]} — explore correlation`,action:`selectPlotType('scatter');switchTab('visualize')`,type:'viz'});
+  if (nc.length >= 1) plotRecos.push({icon:'📶',name:'Histogram',why:`Distribution of ${nc[0]}`,action:`selectPlotType('histogram');switchTab('visualize')`,type:'viz'});
+  if (nc.length >= 1) plotRecos.push({icon:'🌊',name:'KDE Plot',why:`Smooth density of ${nc[0]}`,action:`selectPlotType('kde');switchTab('visualize')`,type:'viz'});
+  if (nc.length >= 2) plotRecos.push({icon:'📦',name:'Box Plot',why:`Compare distributions`,action:`selectPlotType('box');switchTab('visualize')`,type:'viz'});
+  if (nc.length >= 2) plotRecos.push({icon:'🎻',name:'Violin Plot',why:`Full distribution shape`,action:`selectPlotType('violin');switchTab('visualize')`,type:'viz'});
+  if (nc.length >= 2) plotRecos.push({icon:'🗺️',name:'Heatmap / Corr Matrix',why:`${nc.length} numeric columns — correlations`,action:`selectPlotType('correlation');switchTab('visualize')`,type:'viz'});
+  if (nc.length >= 3) plotRecos.push({icon:'🌐',name:'3D Scatter',why:`${nc[0]}, ${nc[1]}, ${nc[2]}`,action:`selectPlotType('scatter3d');switchTab('visualize')`,type:'viz'});
+  if (dt.length >= 1 && nc.length >= 1) plotRecos.push({icon:'📅',name:'Time Series',why:`${dt[0]} × ${nc[0]}`,action:`selectPlotType('timeseries');switchTab('visualize')`,type:'viz'});
+  if (cat.length >= 1 && nc.length >= 1) plotRecos.push({icon:'📊',name:'Bar Chart',why:`${cat[0]} vs ${nc[0]}`,action:`selectPlotType('bar');switchTab('visualize')`,type:'viz'});
+  if (cat.length >= 1 && nc.length >= 1) plotRecos.push({icon:'🥧',name:'Pie / Donut Chart',why:`Proportions of ${cat[0]}`,action:`selectPlotType('pie');switchTab('visualize')`,type:'viz'});
+  if (nc.length >= 4) plotRecos.push({icon:'///',name:'Parallel Coordinates',why:`${nc.length} numeric dimensions`,action:`selectPlotType('parallel');switchTab('visualize')`,type:'viz'});
+
+  const modelRecos = [];
+  if (nc.length >= 2) modelRecos.push({icon:'📐',name:'Linear Regression',why:`Predict ${nc[0]} from ${nc.slice(1).join(', ')}`,action:`switchTab('statistics')`,type:'model'});
+  if (nc.length >= 2) modelRecos.push({icon:'📈',name:'Polynomial Regression',why:`Non-linear fit on numeric data`,action:`switchTab('statistics')`,type:'model'});
+  if (cat.length >= 1 && nc.length >= 1) modelRecos.push({icon:'🧪',name:'ANOVA Test',why:`Compare ${nc[0]} across ${cat[0]} groups`,action:`switchTab('statistics')`,type:'model'});
+  if (nc.length >= 2) modelRecos.push({icon:'🔬',name:'T-Test',why:`Compare means of ${nc[0]} vs ${nc[1]}`,action:`switchTab('statistics')`,type:'model'});
+  if (nc.length >= 1) modelRecos.push({icon:'🔮',name:'Bayesian Inference',why:`Posterior distribution of ${nc[0]}`,action:`switchTab('statistics')`,type:'model'});
+  if (nc.length >= 2) modelRecos.push({icon:'🌀',name:'Confidence Contours',why:`2D likelihood surface`,action:`switchTab('statistics')`,type:'model'});
+
+  const sciRecos = [];
+  if (nc.length >= 3) sciRecos.push({icon:'⚛️',name:'Scientific Contour',why:`${nc[0]} × ${nc[1]}, iso-level from ${nc[2]}`,action:`switchTab('scicontour')`,type:'sci'});
+
+  const card = (recos, title, color) => recos.length ? `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">${title}</div><span class="badge" style="background:${color}22;color:${color};font-size:10px">${recos.length} ideas</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">
+        ${recos.map(r => `<div onclick="${r.action}" style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--r-sm);cursor:pointer;border:1px solid transparent;transition:all .15s" onmouseover="this.style.borderColor='${color}';this.style.background='var(--bg-elevated)'" onmouseout="this.style.borderColor='transparent';this.style.background='var(--bg-tertiary)'">
+          <span style="font-size:20px">${r.icon}</span>
+          <div><div style="font-size:13px;font-weight:600">${r.name}</div><div style="font-size:11px;color:var(--text-tertiary);margin-top:1px">${r.why}</div></div>
+        </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  const summary = [
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:18px">`,
+    `<div class="sc"><div class="sv">${n.toLocaleString()}</div><div class="sl">Rows</div></div>`,
+    `<div class="sc"><div class="sv">${APP.columns.length}</div><div class="sl">Columns</div></div>`,
+    `<div class="sc"><div class="sv">${nc.length}</div><div class="sl">Numeric</div></div>`,
+    `<div class="sc"><div class="sv">${cat.length}</div><div class="sl">Categorical</div></div>`,
+    `<div class="sc"><div class="sv">${dt.length}</div><div class="sl">Datetime</div></div>`,
+    `</div>`
+  ].join('');
+
+  c.innerHTML = summary +
+    card(plotRecos, '📊 Recommended Visualizations', 'var(--accent)') +
+    card(modelRecos, '📐 Statistical Models', 'var(--success)') +
+    card(sciRecos, '⚛️ Scientific Plots', 'var(--cyan)');
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  buildPlotTypeGrid();
+  setupDropZone();
+  selectPlotType('line');
+  renderRefLines();
+  renderSciRefLines();
+  renderSciLayerList();
+  renderVizLayers();
+  renderSciAnnotList();
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      document.getElementById('refLineModal').classList.remove('active');
+      document.getElementById('exportModal').classList.remove('active');
+    }
+  });
+  
+  // Delegated event listener for Visualization Layers to prevent inline XSS
+  document.addEventListener('change', e => {
+    if (e.target.classList.contains('layer-input')) {
+      const l = VIZ_LAYERS.find(x => x.id === +e.target.dataset.lid);
+      if (l) { 
+        l[e.target.dataset.field] = e.target.value; 
+        if (e.target.dataset.field === 'color' && e.target.type === 'color') renderVizLayers(); 
+        schedulePreview(); 
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>

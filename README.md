@@ -4,8 +4,9 @@
 
 ### Scientific Visualization &amp; Statistical Studio
 
-**A research-grade data analysis workbench that runs entirely in your browser.**
-No install. No backend. No build step. One HTML file.
+**Plot it. Analyse it. All in your browser.**
+46 plot types, statistics without code, and a full inference lab — in one HTML file.
+No install. No backend. No sign-up.
 
 <br>
 
@@ -15,7 +16,7 @@ No install. No backend. No build step. One HTML file.
 
 ![Single File](https://img.shields.io/badge/single_file-no_build_step-7a1f2b?style=for-the-badge)
 ![Client Side](https://img.shields.io/badge/100%25-client_side-1f3a5c?style=for-the-badge)
-![Plot Types](https://img.shields.io/badge/plot_types-50%2B-b8860b?style=for-the-badge)
+![Plot Types](https://img.shields.io/badge/plot_types-46-b8860b?style=for-the-badge)
 ![Analysis Panels](https://img.shields.io/badge/analysis_panels-9-3f6c47?style=for-the-badge)
 
 ![No Dependencies](https://img.shields.io/badge/backend-none-lightgrey?style=flat-square)
@@ -28,11 +29,16 @@ No install. No backend. No build step. One HTML file.
 
 ## ✨ What is it?
 
-VizDash Pro turns a browser tab into a scientific analysis platform. Drop in a CSV, Excel
-sheet, or JSON file and you get publication-quality plotting **plus** the inference layer that
-usually forces you into Python: non-linear fitting with real parameter uncertainties,
-goodness-of-fit diagnostics, likelihood profiles, bootstrap corner plots, Monte-Carlo error
-propagation, Fourier analysis, and phase-space dynamics.
+Everyone should be able to plot and analyse their own data — without installing Python first.
+
+Drop in a CSV, Excel sheet, or JSON file and VizDash Pro gives you **46 plot types**, a
+data-cleaning bench, and regression and hypothesis tests you drive from a dropdown. Then,
+when you need to go further, it keeps going into the inference layer that usually forces you
+into a notebook: non-linear fitting with real parameter uncertainties, goodness-of-fit
+diagnostics, likelihood profiles, bootstrap corner plots, Monte-Carlo error propagation,
+Fourier analysis, and phase-space dynamics.
+
+Whether it's your first histogram or your hundredth model fit.
 
 > **Your data never leaves your machine.** Everything — parsing, fitting, FFTs, Monte Carlo —
 > runs in your browser. Nothing is uploaded anywhere.
@@ -93,7 +99,7 @@ model, the fit statistics and the 95 % intervals are all live.
 <td width="50%" valign="top">
 
 **Visualize**
-50+ plot types across 7 categories — basic, statistical, multivariate,
+46 plot types across 7 categories — basic, statistical, multivariate,
 3-D, time series, composition and specialised. Multi-layer, each layer
 with its own file and column mapping. LaTeX axis labels, log/log₂ scales,
 reference lines, 8 palettes.

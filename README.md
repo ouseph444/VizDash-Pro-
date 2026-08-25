@@ -76,9 +76,10 @@ model, the fit statistics and the 95 % intervals are all live.
 
 <br>
 
-### Dash Board Experience — alternative to POWER BI. 
+### Dashboard Experience — Alternative to Power BI. 
+Convert the data into story telling Board. An interactive Dash Board, Example data avilabe in DashBoard folder
 
-Convert the data into story telling Board. An interactive Dash Board
+
 
 ![Dash Board Panel](BI.png)
 

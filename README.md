@@ -74,6 +74,14 @@ model, the fit statistics and the 95 % intervals are all live.
 
 ![Analysis Lab fit and diagnostics panel](s3.png)
 
+<br>
+
+### Dash Board Experience — alternative to POWER BI. 
+
+Convert the data into story telling Board. An interactive Dash Board
+
+![Dash Board Panel](BI.png)
+
 ---
 
 ## 🧪 The Analysis Lab — 9 panels, 34 purpose-built figures

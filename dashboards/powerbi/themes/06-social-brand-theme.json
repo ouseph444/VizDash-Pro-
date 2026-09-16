@@ -1,0 +1,79 @@
+{
+  "name": "Social Media & Brand Engagement",
+  "dataColors": [
+    "#d6249f",
+    "#8a3ffc",
+    "#0ea5e9",
+    "#ff7a45",
+    "#22c55e",
+    "#facc15",
+    "#ec4899",
+    "#06b6d4"
+  ],
+  "background": "#ffffff",
+  "backgroundLight": "#f7eff8",
+  "backgroundNeutral": "#ebdcef",
+  "foreground": "#3a1748",
+  "foregroundNeutralSecondary": "#7a5c86",
+  "tableAccent": "#d6249f",
+  "good": "#22c55e",
+  "neutral": "#8c8c8c",
+  "bad": "#ff7a45",
+  "textClasses": {
+    "title": {
+      "fontSize": 13,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#3a1748"
+    },
+    "label": {
+      "fontSize": 9,
+      "fontFace": "Segoe UI",
+      "color": "#7a5c86"
+    },
+    "callout": {
+      "fontSize": 24,
+      "fontFace": "Segoe UI",
+      "color": "#3a1748"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#ffffff"
+              }
+            }
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#ebdcef"
+              }
+            },
+            "radius": 8
+          }
+        ],
+        "title": [
+          {
+            "show": true,
+            "fontColor": {
+              "solid": {
+                "color": "#3a1748"
+              }
+            },
+            "fontSize": 11,
+            "bold": true,
+            "alignment": "left"
+          }
+        ]
+      }
+    }
+  }
+}

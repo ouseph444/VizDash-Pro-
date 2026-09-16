@@ -1,0 +1,79 @@
+{
+  "name": "Web, SEO & Content Analytics",
+  "dataColors": [
+    "#f97316",
+    "#0ea5e9",
+    "#14b8a6",
+    "#a855f7",
+    "#ef4444",
+    "#22c55e",
+    "#eab308",
+    "#64748b"
+  ],
+  "background": "#ffffff",
+  "backgroundLight": "#f0f3f6",
+  "backgroundNeutral": "#dee4ea",
+  "foreground": "#22303c",
+  "foregroundNeutralSecondary": "#5d6b7a",
+  "tableAccent": "#f97316",
+  "good": "#22c55e",
+  "neutral": "#8c8c8c",
+  "bad": "#ef4444",
+  "textClasses": {
+    "title": {
+      "fontSize": 13,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#22303c"
+    },
+    "label": {
+      "fontSize": 9,
+      "fontFace": "Segoe UI",
+      "color": "#5d6b7a"
+    },
+    "callout": {
+      "fontSize": 24,
+      "fontFace": "Segoe UI",
+      "color": "#22303c"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#ffffff"
+              }
+            }
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#dee4ea"
+              }
+            },
+            "radius": 8
+          }
+        ],
+        "title": [
+          {
+            "show": true,
+            "fontColor": {
+              "solid": {
+                "color": "#22303c"
+              }
+            },
+            "fontSize": 11,
+            "bold": true,
+            "alignment": "left"
+          }
+        ]
+      }
+    }
+  }
+}

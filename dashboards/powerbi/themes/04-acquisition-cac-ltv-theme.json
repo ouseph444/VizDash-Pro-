@@ -1,0 +1,79 @@
+{
+  "name": "Customer Acquisition, CAC & LTV",
+  "dataColors": [
+    "#4f46e5",
+    "#06b6d4",
+    "#f59e0b",
+    "#ec4899",
+    "#10b981",
+    "#8b5cf6",
+    "#ef4444",
+    "#3b82f6"
+  ],
+  "background": "#ffffff",
+  "backgroundLight": "#eff0f8",
+  "backgroundNeutral": "#dddfef",
+  "foreground": "#1b1f4b",
+  "foregroundNeutralSecondary": "#5f648c",
+  "tableAccent": "#4f46e5",
+  "good": "#10b981",
+  "neutral": "#8c8c8c",
+  "bad": "#ef4444",
+  "textClasses": {
+    "title": {
+      "fontSize": 13,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#1b1f4b"
+    },
+    "label": {
+      "fontSize": 9,
+      "fontFace": "Segoe UI",
+      "color": "#5f648c"
+    },
+    "callout": {
+      "fontSize": 24,
+      "fontFace": "Segoe UI",
+      "color": "#1b1f4b"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#ffffff"
+              }
+            }
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#dddfef"
+              }
+            },
+            "radius": 8
+          }
+        ],
+        "title": [
+          {
+            "show": true,
+            "fontColor": {
+              "solid": {
+                "color": "#1b1f4b"
+              }
+            },
+            "fontSize": 11,
+            "bold": true,
+            "alignment": "left"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "name": "Marketing Funnel & Lead Conversion",
+  "dataColors": [
+    "#0ea5a5",
+    "#22c55e",
+    "#f59e0b",
+    "#3b82f6",
+    "#ef4444",
+    "#14b8a6",
+    "#8b5cf6",
+    "#f97316"
+  ],
+  "background": "#ffffff",
+  "backgroundLight": "#ecf5f4",
+  "backgroundNeutral": "#d5e6e4",
+  "foreground": "#0a3b3d",
+  "foregroundNeutralSecondary": "#4e7375",
+  "tableAccent": "#0ea5a5",
+  "good": "#22c55e",
+  "neutral": "#8c8c8c",
+  "bad": "#ef4444",
+  "textClasses": {
+    "title": {
+      "fontSize": 13,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#0a3b3d"
+    },
+    "label": {
+      "fontSize": 9,
+      "fontFace": "Segoe UI",
+      "color": "#4e7375"
+    },
+    "callout": {
+      "fontSize": 24,
+      "fontFace": "Segoe UI",
+      "color": "#0a3b3d"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#ffffff"
+              }
+            }
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#d5e6e4"
+              }
+            },
+            "radius": 8
+          }
+        ],
+        "title": [
+          {
+            "show": true,
+            "fontColor": {
+              "solid": {
+                "color": "#0a3b3d"
+              }
+            },
+            "fontSize": 11,
+            "bold": true,
+            "alignment": "left"
+          }
+        ]
+      }
+    }
+  }
+}
